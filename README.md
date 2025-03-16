@@ -1,5 +1,5 @@
 === TeckGlobal Brute Force Protect ===
-Contributors: TeckGlobal LLC, xAI-Grok
+ * Contributors: TeckGlobal LLC, xAI-Grok
 Author URI: https://teck-global.com
 Plugin URI: https://teck-global.com/wordpress-plugins
 Donate link: https://teck-global.com/buy-me-a-coffee/
