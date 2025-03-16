@@ -103,10 +103,10 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 == Screenshots ==
 
 1. **Settings Page**: Configure max attempts, ban duration, and excluded IPs. 
-<img src="https://teck-global.com/wp-content/uploads/2025/03/Screenshot-2025-03-15-at-21.59.04.webp" alt="Settings Main Page" style="width:450px;height:633px;">
+<img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp" alt="Settings Main Page" style="width:521px;height:771px;">
 
-2. **IP Logs**: View detailed logs of login attempts and bans.
-<img src="https://teck-global.com/wp-content/uploads/2025/03/Screenshot-2025-03-15-at-22.02.33-scaled-e1742095177310.webp" alt="Settings Main Page" style="width:600px;height:189px;">
+2. **Manage IPs**: Add or Remove IP to the Ban List.
+<img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp" alt="Settings Main Page" style="width:324px;height:296px;">
 
-3. **Geolocation Map**: Interactive map showing banned IP locations.
-<img src="https://teck-global.com/wp-content/uploads/2025/03/Screenshot-2025-03-15-at-22.03.07-scaled-e1742095266357.webp" alt="Settings Main Page" style="width:600px;height:175px;">
+3. **IP Logs & Map**: Logs of IP's banned with an interactive map showing banned IP locations.
+<img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp" alt="Settings Main Page" style="width:700px;height:296px;">
