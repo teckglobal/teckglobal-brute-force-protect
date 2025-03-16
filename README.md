@@ -56,6 +56,7 @@ Banned IPs are blocked from accessing the site and see an "Access Denied" messag
 Geolocation requires a GeoLite2-City.mmdb file (free from MaxMind) and the MaxMind GeoIP2 PHP library (installed via Composer). All other features work locally.
 
 == Changelog ==
+
 = 1.0.3 =
 * Fixed issue where visiting wp-login.php triggered an immediate IP ban.
 * Ensured invalid username checks only run on form submission.
