@@ -1,115 +1,97 @@
-/* TeckGlobal Brute Force Protect Styles */
-.wrap {
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+/* assets/css/style.css */
 
-h1 {
-    color: #1a73e8;
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-h2 {
-    font-size: 20px;
-    margin-top: 20px;
-    color: #333;
-}
-
-form {
-    margin-bottom: 20px;
-}
-
-label {
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-input[type="text"],
-input[type="file"],
-input[type="number"] {
-    padding: 8px;
-    width: 300px;
-    margin-right: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-input[type="number"].small-text {
-    width: 100px;
-}
-
-input[type="checkbox"] {
-    margin-right: 5px;
-}
-
-.button {
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.button-primary {
-    background: #1a73e8;
-    color: #fff;
-    border: none;
-}
-
-.button-primary:hover {
-    background: #155ab6;
-}
-
-.button-secondary {
-    background: #6c757d;
-    color: #fff;
-    border: none;
-}
-
-.button-secondary:hover {
-    background: #5a6268;
-}
-
-table.wp-list-table {
+/* Ensure compatibility with WordPress admin styles */
+.teckglobal-log-table {
     width: 100%;
     border-collapse: collapse;
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #e5e5e5;
 }
 
-table.wp-list-table th,
-table.wp-list-table td {
+.teckglobal-log-table th,
+.teckglobal-log-table td {
     padding: 10px;
+    border: 1px solid #e5e5e5;
     text-align: left;
-    border-bottom: 1px solid #ddd;
 }
 
-table.wp-list-table th {
-    background: #f9f9f9;
+.teckglobal-log-table th {
+    background: #f7f7f7;
     font-weight: bold;
+    color: #23282d;
 }
 
-#map {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.teckglobal-summary {
+.teckglobal-log-table tr:nth-child(even) {
     background: #f9f9f9;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 20px;
 }
 
-.teckglobal-summary p {
-    margin: 10px 0;
+.teckglobal-log-table tr:hover {
+    background: #f1f1f1;
 }
 
-.teckglobal-summary a {
-    color: #1a73e8;
+/* Pagination styling */
+.teckglobal-pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.teckglobal-pagination a {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 4px;
     text-decoration: none;
+    border: 1px solid #ddd;
+    color: #0073aa;
+    background: #fff;
+    border-radius: 3px;
 }
 
-.teckglobal-summary a:hover {
-    text-decoration: underline;
+.teckglobal-pagination a.active {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.teckglobal-pagination a:hover:not(.active) {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .teckglobal-log-table,
+    .teckglobal-log-table thead,
+    .teckglobal-log-table tbody,
+    .teckglobal-log-table th,
+    .teckglobal-log-table td,
+    .teckglobal-log-table tr {
+        display: block;
+    }
+
+    .teckglobal-log-table th {
+        display: none;
+    }
+
+    .teckglobal-log-table td {
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .teckglobal-log-table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        font-weight: bold;
+        color: #23282d;
+    }
+
+    .teckglobal-unban-ip {
+        display: block;
+        margin-top: 5px;
+    }
 }

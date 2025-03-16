@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.0
+ * Version: 1.1.1
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -123,7 +123,7 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
 }
 add_action('wp_authenticate', 'teckglobal_bfp_check_invalid_username', 10, 2);
 
-// New Feature: Detect exploit scans and ban IPs
+// Detect exploit scans and ban IPs
 function teckglobal_bfp_check_exploit_scans() {
     $ip = teckglobal_bfp_get_client_ip();
     $enable_exploit_protection = get_option('teckglobal_bfp_exploit_protection', 0);
@@ -193,7 +193,7 @@ function teckglobal_bfp_block_banned_ips() {
 }
 add_action('init', 'teckglobal_bfp_block_banned_ips', 1);
 
-// Register admin menu
+// Register admin menu (removed Geolocation Map)
 function teckglobal_bfp_admin_menu() {
     add_menu_page(
         'TeckGlobal BFP',
@@ -222,33 +222,55 @@ function teckglobal_bfp_admin_menu() {
     );
     add_submenu_page(
         'teckglobal-bfp',
-        'IP Logs',
-        'IP Logs',
+        'IP Logs & Map',
+        'IP Logs & Map',
         'manage_options',
         'teckglobal-bfp-ip-logs',
         'teckglobal_bfp_ip_logs_page'
-    );
-    add_submenu_page(
-        'teckglobal-bfp',
-        'Geolocation Map',
-        'Geolocation Map',
-        'manage_options',
-        'teckglobal-bfp-geo-map',
-        'teckglobal_bfp_geo_map_page'
     );
 }
 add_action('admin_menu', 'teckglobal_bfp_admin_menu');
 
 // Enqueue admin assets
 function teckglobal_bfp_enqueue_admin_assets($hook) {
+    // Log the hook for debugging
+    teckglobal_bfp_debug("Enqueue hook triggered: $hook");
+
+    // Load assets on all TeckGlobal BFP pages
     if (strpos($hook, 'teckglobal-bfp') !== false) {
-        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], '1.0.0');
+        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], '1.1.0');
         wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
         wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
-        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js'], '1.0.0', true);
+        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], '1.1.0', true);
+
+        // Localize script with AJAX data for IP Logs page
+        if (strpos($hook, 'teckglobal-bfp-ip-logs') !== false) {
+            wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('teckglobal_bfp_unban_nonce'),
+            ]);
+        }
     }
 }
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
+
+// AJAX handler for unban action
+function teckglobal_bfp_ajax_unban_ip() {
+    check_ajax_referer('teckglobal_bfp_unban_nonce', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Insufficient permissions']);
+    }
+
+    $ip = sanitize_text_field($_POST['ip']);
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        wp_send_json_error(['message' => 'Invalid IP address']);
+    }
+
+    teckglobal_bfp_unban_ip($ip);
+    wp_send_json_success(['ip' => $ip]);
+}
+add_action('wp_ajax_teckglobal_bfp_unban_ip', 'teckglobal_bfp_ajax_unban_ip');
 
 // Database setup on activation
 function teckglobal_bfp_activate() {
@@ -274,13 +296,13 @@ function teckglobal_bfp_activate() {
     dbDelta($sql);
 
     // Set default options
-    add_option('teckglobal_bfp_geo_path', '/var/www/html/teck-global.com/wp-content/plugins/teckglobal-brute-force-protect/vendor/maxmind-db/GeoLite2-City.mmdb');
+    add_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb');
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', 60);
     add_option('teckglobal_bfp_auto_ban_invalid', 0);
     add_option('teckglobal_bfp_excluded_ips', '');
-    add_option('teckglobal_bfp_exploit_protection', 0); // New option
-    add_option('teckglobal_bfp_exploit_max_attempts', 3); // New option
+    add_option('teckglobal_bfp_exploit_protection', 0);
+    add_option('teckglobal_bfp_exploit_max_attempts', 3);
 }
 register_activation_hook(__FILE__, 'teckglobal_bfp_activate');
 

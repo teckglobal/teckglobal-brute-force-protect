@@ -50,10 +50,15 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 3. Geolocation Map displaying banned IP locations.
 
 == Changelog ==
+= 1.1.2 =
+* Fixed cosmetic issue with log limit dropdown not reflecting persisted value on page reload.
+
 = 1.1.1 =
 * Added "Unban" button to IP Logs page.
 * Fixed geolocation data not populating for manually banned IPs (e.g., country "Unknown").
 * Fixed blank Geolocation Map by ensuring Leaflet integration.
+* Added persistent log limit selection (10, 25, 50, 100) across page loads.
+* Fixed cosmetic issue where log limit dropdown UI didn’t reflect persisted value.
 
 = 1.1.0 =
 * Added exploit scan protection to detect and ban IPs scanning for vulnerabilities (e.g., phpMyAdmin, wp-config.php).
@@ -78,7 +83,7 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 
 == Upgrade Notice ==
 = 1.1.1 =
-Fixes unban option, geolocation for manual bans, and map display—update for full functionality.
+Fixes unban option, geolocation for manual bans, map display, and log limit UI—update for full functionality and improved usability.
 
 == License ==
 This plugin is licensed under the GPLv2 or later. See the License URI for details.
