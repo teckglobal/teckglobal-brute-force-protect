@@ -1,22 +1,23 @@
 === TeckGlobal Brute Force Protect ===
 Contributors: teckglobal, xai-grok
-Tags: security, brute force, ip ban, geolocation, wordpress security
+Tags: security, brute force, ip ban, geolocation, wordpress security, exploit protection
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 1.0.3
+Stable tag: 1.1.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
-A WordPress plugin to prevent brute force login attacks with IP management and geolocation features.
+A WordPress plugin to prevent brute force login attacks and exploit scans with IP management and geolocation features.
 
 == Description ==
-TeckGlobal Brute Force Protect is a security plugin designed to safeguard your WordPress site from brute force login attempts. It tracks login attempts, bans IPs after exceeding a set threshold, and provides geolocation insights using the GeoLite2 database. Key features include:
+TeckGlobal Brute Force Protect is a security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks login attempts, bans IPs after exceeding a set threshold, and provides geolocation insights using the GeoLite2 database. Key features include:
 
 - **IP Tracking and Banning**: Logs failed login attempts and bans IPs after a configurable number of attempts.
 - **Geolocation Mapping**: Displays banned IPs on an interactive map with country details.
 - **IP Exclusion**: Allows exclusion of specific IPs or CIDR subnets from being logged or banned.
 - **Invalid Username Protection**: Option to auto-ban IPs attempting logins with non-existent usernames.
+- **Exploit Scan Protection**: Detects and bans IPs scanning for common vulnerabilities (e.g., phpMyAdmin, wp-config.php).
 - **Admin Tools**: Manage IPs, view logs, and configure settings via an intuitive dashboard.
 
 This plugin is 100% free and open-source. If you find it useful, please consider donating at [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/).
@@ -40,12 +41,23 @@ Banned IPs are blocked from accessing the site and see an "Access Denied" messag
 = Does this plugin require any external services? =
 Geolocation requires a GeoLite2-City.mmdb file (free from MaxMind) and the MaxMind GeoIP2 PHP library (installed via Composer). All other features work locally.
 
+= How does exploit scan protection work? =
+When enabled, the plugin monitors requests for common exploit targets (e.g., /phpMyAdmin, /wp-config.php) and bans IPs after a set number of attempts.
+
 == Screenshots ==
-1. Settings page for configuring max attempts, ban time, and IP exclusions.
-2. IP Logs showing banned IPs with geolocation data.
+1. Settings page for configuring max attempts, ban time, IP exclusions, and exploit protection.
+2. IP Logs showing banned IPs with geolocation data and unban option.
 3. Geolocation Map displaying banned IP locations.
 
 == Changelog ==
+= 1.1.1 =
+* Added "Unban" button to IP Logs page.
+* Fixed geolocation data not populating for manually banned IPs (e.g., country "Unknown").
+* Fixed blank Geolocation Map by ensuring Leaflet integration.
+
+= 1.1.0 =
+* Added exploit scan protection to detect and ban IPs scanning for vulnerabilities (e.g., phpMyAdmin, wp-config.php).
+
 = 1.0.3 =
 * Fixed issue where visiting wp-login.php triggered an immediate IP ban.
 * Ensured invalid username checks only run on form submission.
@@ -65,8 +77,8 @@ Geolocation requires a GeoLite2-City.mmdb file (free from MaxMind) and the MaxMi
 * Enhanced debugging with detailed logs in `wp-content/teckglobal-bfp-debug.log`.
 
 == Upgrade Notice ==
-= 1.0.3 =
-This update fixes a critical bug where visiting the login page banned IPs. Update immediately for proper functionality.
+= 1.1.1 =
+Fixes unban option, geolocation for manual bans, and map display—update for full functionality.
 
 == License ==
 This plugin is licensed under the GPLv2 or later. See the License URI for details.

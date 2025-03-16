@@ -52,6 +52,11 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 
 == Changelog ==
 
+### 1.1.1
+- Added "Unban" button to IP Logs page.
+- Fixed geolocation data not populating for manually banned IPs (e.g., country "Unknown").
+- Fixed blank Geolocation Map by ensuring Leaflet integration.
+
 ### 1.1.0
 - Added exploit scan protection to detect and ban IPs scanning for vulnerabilities (e.g., phpMyAdmin, wp-config.php).
 
