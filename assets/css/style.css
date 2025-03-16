@@ -1,0 +1,115 @@
+/* TeckGlobal Brute Force Protect Styles */
+.wrap {
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #1a73e8;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 20px;
+    margin-top: 20px;
+    color: #333;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+input[type="text"],
+input[type="file"],
+input[type="number"] {
+    padding: 8px;
+    width: 300px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+input[type="number"].small-text {
+    width: 100px;
+}
+
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button-primary {
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+}
+
+.button-primary:hover {
+    background: #155ab6;
+}
+
+.button-secondary {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+}
+
+.button-secondary:hover {
+    background: #5a6268;
+}
+
+table.wp-list-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table.wp-list-table th,
+table.wp-list-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table.wp-list-table th {
+    background: #f9f9f9;
+    font-weight: bold;
+}
+
+#map {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.teckglobal-summary {
+    background: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.teckglobal-summary p {
+    margin: 10px 0;
+}
+
+.teckglobal-summary a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.teckglobal-summary a:hover {
+    text-decoration: underline;
+}
