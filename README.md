@@ -1,15 +1,15 @@
 === TeckGlobal Brute Force Protect ===
  * Contributors: TeckGlobal LLC, xAI-Grok
-Author URI: https://teck-global.com
-Plugin URI: https://teck-global.com/wordpress-plugins
-Donate link: https://teck-global.com/buy-me-a-coffee/
-Requires at least: 5.0
-Tested up to: 6.7
-Stable tag: 1.0.4
-Requires PHP: 7.4 or later
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
+ * Author URI: https://teck-global.com
+ * Plugin URI: https://teck-global.com/wordpress-plugins
+ * Donate link: https://teck-global.com/buy-me-a-coffee/
+ * Requires at least: 5.0
+ * Tested up to: 6.7
+ * Stable tag: 1.0.4
+ * Requires PHP: 7.4 or later
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
 
 A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks with IP management and geolocation features.
 
