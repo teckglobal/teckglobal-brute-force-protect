@@ -1,11 +1,11 @@
 <?php
 /*
  * Plugin Name: TeckGlobal Brute Force Protect
- * Author: TeckGlobal LLC & xAI-Grok
+ * Authors: TeckGlobal LLC, xAI-Grok
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
- * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.3
+ * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
+ * Version: 1.1.0
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -106,7 +106,6 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
     $ip = teckglobal_bfp_get_client_ip();
     $auto_ban_invalid = get_option('teckglobal_bfp_auto_ban_invalid', 0);
 
-    // Only process if form is submitted
     if (!isset($_POST['log']) || empty($username)) {
         teckglobal_bfp_debug("No login form submission detected for IP $ip; skipping check");
         return;
@@ -123,6 +122,46 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
     }
 }
 add_action('wp_authenticate', 'teckglobal_bfp_check_invalid_username', 10, 2);
+
+// New Feature: Detect exploit scans and ban IPs
+function teckglobal_bfp_check_exploit_scans() {
+    $ip = teckglobal_bfp_get_client_ip();
+    $enable_exploit_protection = get_option('teckglobal_bfp_exploit_protection', 0);
+
+    if (!$enable_exploit_protection) {
+        return;
+    }
+
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $suspicious_patterns = [
+        '/phpMyAdmin/i',
+        '/adminer/i',
+        '/wp-config\.php/i',
+        '/xmlrpc\.php/i',
+        '/\.env/i',
+        '/admin/i',
+        '/db/i',
+        '/test/i',
+    ];
+
+    foreach ($suspicious_patterns as $pattern) {
+        if (preg_match($pattern, $request_uri)) {
+            teckglobal_bfp_debug("Exploit scan detected from IP $ip: $request_uri matches $pattern");
+            teckglobal_bfp_log_attempt($ip);
+            $max_attempts = (int) get_option('teckglobal_bfp_exploit_max_attempts', 3);
+            $attempts = teckglobal_bfp_get_attempts($ip);
+
+            if ($attempts >= $max_attempts) {
+                teckglobal_bfp_ban_ip($ip);
+                teckglobal_bfp_debug("IP $ip banned for exceeding $max_attempts exploit scan attempts");
+            } else {
+                teckglobal_bfp_debug("IP $ip exploit scan attempt logged, attempts: $attempts/$max_attempts");
+            }
+            break;
+        }
+    }
+}
+add_action('init', 'teckglobal_bfp_check_exploit_scans', 2);
 
 // Block banned IPs during authentication
 function teckglobal_bfp_block_banned_ips_login($user, $username, $password) {
@@ -235,11 +274,13 @@ function teckglobal_bfp_activate() {
     dbDelta($sql);
 
     // Set default options
-    add_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb');
+    add_option('teckglobal_bfp_geo_path', '/var/www/html/teck-global.com/wp-content/plugins/teckglobal-brute-force-protect/vendor/maxmind-db/GeoLite2-City.mmdb');
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', 60);
     add_option('teckglobal_bfp_auto_ban_invalid', 0);
     add_option('teckglobal_bfp_excluded_ips', '');
+    add_option('teckglobal_bfp_exploit_protection', 0); // New option
+    add_option('teckglobal_bfp_exploit_max_attempts', 3); // New option
 }
 register_activation_hook(__FILE__, 'teckglobal_bfp_activate');
 
