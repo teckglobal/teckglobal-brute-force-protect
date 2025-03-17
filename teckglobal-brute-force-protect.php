@@ -296,9 +296,13 @@ function teckglobal_bfp_activate() {
     ) $charset_collate;";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    ob_start();
     dbDelta($sql);
+    $output = ob_get_clean();
+    if (!empty($output)) {
+        teckglobal_bfp_debug("Activation DB output: $output");
+    }
 
-    // Set default options (use update_option to overwrite old paths)
     update_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', 60);
@@ -308,10 +312,10 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
     add_option('teckglobal_bfp_maxmind_key', '');
 
-    // Download GeoIP file if not present
-    teckglobal_bfp_download_geoip();
+    if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
+        wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
+    }
 
-    // Schedule cron for GeoIP updates (Tues/Fri, 1 AM UTC)
     if (!wp_next_scheduled('teckglobal_bfp_update_geoip')) {
         wp_schedule_event(strtotime('next Tuesday 01:00:00 UTC'), 'weekly', 'teckglobal_bfp_update_geoip');
         wp_schedule_event(strtotime('next Friday 01:00:00 UTC'), 'weekly', 'teckglobal_bfp_update_geoip');
@@ -319,9 +323,21 @@ function teckglobal_bfp_activate() {
 }
 register_activation_hook(__FILE__, 'teckglobal_bfp_activate');
 
+// Initial GeoIP download hook
+function teckglobal_bfp_initial_geoip_download() {
+    ob_start();
+    teckglobal_bfp_download_geoip();
+    $output = ob_get_clean();
+    if (!empty($output)) {
+        teckglobal_bfp_debug("Initial GeoIP download output: $output");
+    }
+}
+add_action('teckglobal_bfp_initial_geoip_download', 'teckglobal_bfp_initial_geoip_download');
+
 // Clean up on deactivation
 function teckglobal_bfp_deactivate() {
     wp_clear_scheduled_hook('teckglobal_bfp_update_geoip');
+    wp_clear_scheduled_hook('teckglobal_bfp_initial_geoip_download');
 }
 register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
 
@@ -362,7 +378,7 @@ function teckglobal_bfp_check_for_updates($transient) {
         ];
         $transient->response['teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'] = (object) $plugin_data;
         teckglobal_bfp_debug("Update available: $current_version -> $new_version");
-        teckglobal_bfp_download_geoip(); // Check GeoIP on plugin update
+        teckglobal_bfp_download_geoip();
     } else {
         teckglobal_bfp_debug("No update available: Current $current_version, Latest $new_version");
     }
