@@ -52,6 +52,15 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 
 == Changelog ==
 
+### 1.1.5
+- Test release to verify GitHub-based update mechanism.
+
+### 1.1.4
+- Preserved ban reason flags (Scan Exploit, Brute Force, Manual Ban) in IP Logs after ban expires for historical tracking.
+- Changed Action column to "Ban Expired" from "N/A" when a ban is removed or expires.
+- Added GitHub-based plugin update checker for automatic updates from the repository.
+
+
 ### 1.1.3
 - Added "Manual Ban" column to IP Logs & Map page to distinguish manually banned IPs.
 - Improved ban reason tracking with separate indicators for manual, brute force, and exploit scan bans.
