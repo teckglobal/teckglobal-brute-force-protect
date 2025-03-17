@@ -150,10 +150,10 @@ function teckglobal_bfp_unban_ip(string $ip): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $wpdb->update(
         $table_name,
-        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0, 'scan_exploit' => 0, 'brute_force' => 0, 'manual_ban' => 0],
+        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0], // Preserve scan_exploit, brute_force, manual_ban
         ['ip' => $ip]
     );
-    teckglobal_bfp_debug("IP $ip unbanned");
+    teckglobal_bfp_debug("IP $ip unbanned, ban reason flags preserved");
 }
 
 function teckglobal_bfp_is_ip_banned(string $ip): bool {
@@ -165,8 +165,8 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
     $row = $wpdb->get_row($wpdb->prepare("SELECT banned, ban_expiry FROM $table_name WHERE ip = %s", $ip));
     if ($row && $row->banned == 1) {
         if ($row->ban_expiry && current_time('mysql') > $row->ban_expiry) {
-            teckglobal_bfp_unban_ip($ip);
-            teckglobal_bfp_debug("IP $ip ban expired, unbanned.");
+            teckglobal_bfp_unban_ip($ip); // Unban but keep ban reason flags
+            teckglobal_bfp_debug("IP $ip ban expired, unbanned with preserved flags.");
             return false;
         }
         teckglobal_bfp_debug("IP $ip is currently banned.");
@@ -425,21 +425,22 @@ function teckglobal_bfp_ip_logs_page(): void {
                             "$base_url&action=unban&ip=" . urlencode($log->ip) . "&log_page=$page",
                             'teckglobal_bfp_unban_ip_log'
                         );
+                        $is_banned = teckglobal_bfp_is_ip_banned($log->ip); // Check current ban status
                         echo '<tr>';
                         echo '<td data-label="IP Address">' . esc_html($log->ip) . '</td>';
                         echo '<td data-label="Last Attempt">' . esc_html($log->timestamp) . '</td>';
                         echo '<td data-label="Attempts">' . esc_html($log->attempts) . '</td>';
-                        echo '<td data-label="Banned">' . ($log->banned ? 'Yes' : 'No') . '</td>';
+                        echo '<td data-label="Banned">' . ($is_banned ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Ban Expiry">' . esc_html($log->ban_expiry ?: 'N/A') . '</td>';
                         echo '<td data-label="Country">' . esc_html($log->country) . '</td>';
                         echo '<td data-label="Scan Exploit">' . ($log->scan_exploit ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Brute Force">' . ($log->brute_force ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Manual Ban">' . ($log->manual_ban ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Action">';
-                        if ($log->banned) {
+                        if ($is_banned) {
                             echo '<a href="' . esc_url($unban_url) . '" class="button button-secondary teckglobal-unban-ip" data-ip="' . esc_attr($log->ip) . '">Remove Ban</a>';
                         } else {
-                            echo 'N/A';
+                            echo 'Ban Expired';
                         }
                         echo '</td>';
                         echo '</tr>';
@@ -483,3 +484,5 @@ function teckglobal_bfp_ip_logs_page(): void {
     </div>
     <?php
 }
+
+////////////////////////////* EOF *////////////////////////////

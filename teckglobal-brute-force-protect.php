@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.3
+ * Version: 1.1.5
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -24,6 +24,8 @@ if (!defined('ABSPATH')) {
 // Define constants
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
+define('TECKGLOBAL_BFP_VERSION', '1.1.5');
+define('TECKGLOBAL_BFP_GITHUB_API', 'https://api.github.com/repos/teckglobal/teckglobal-brute-force-protect/releases/latest');
 
 // Include functions file
 require_once TECKGLOBAL_BFP_PATH . 'includes/functions.php';
@@ -116,7 +118,7 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
         teckglobal_bfp_debug("Invalid username '$username' detected from IP $ip");
         teckglobal_bfp_log_attempt($ip);
         teckglobal_bfp_ban_ip($ip, 'brute_force');
-        teckglobal_bfp_debug("IP $ip auto-banned for invalid username (brute force)");
+        teckglobal_bfp_debug("IP $ip auto-banned for invalid username (brute_force)");
     } else {
         teckglobal_bfp_debug("Username '$username' is valid or auto-ban is off; no action taken");
     }
@@ -235,13 +237,13 @@ add_action('admin_menu', 'teckglobal_bfp_admin_menu');
 function teckglobal_bfp_enqueue_admin_assets($hook) {
     teckglobal_bfp_debug("Enqueue hook triggered: $hook");
     if (strpos($hook, 'teckglobal-bfp') !== false) {
-        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], '1.1.3');
+        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], TECKGLOBAL_BFP_VERSION);
         wp_enqueue_style('leaflet-css', TECKGLOBAL_BFP_URL . 'assets/css/leaflet.css', [], '1.9.4');
         wp_enqueue_script('leaflet-js', TECKGLOBAL_BFP_URL . 'assets/js/leaflet.js', [], '1.9.4', true);
-        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], '1.1.3', true);
+        wp_enqueue_script('teckglobal_bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], TECKGLOBAL_BFP_VERSION, true);
 
         if (strpos($hook, 'teckglobal-bfp-ip-logs') !== false) {
-            wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', [
+            wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('teckglobal_bfp_unban_nonce'),
             ]);
@@ -310,3 +312,50 @@ function teckglobal_bfp_deactivate() {
     // Optionally remove options or table here if desired
 }
 register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
+
+// Plugin update checker
+function teckglobal_bfp_check_for_updates($transient) {
+    if (empty($transient->checked)) {
+        return $transient;
+    }
+
+    $response = wp_remote_get(TECKGLOBAL_BFP_GITHUB_API, [
+        'timeout' => 10,
+        'headers' => [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'TeckGlobal-Brute-Force-Protect/' . TECKGLOBAL_BFP_VERSION, // GitHub requires a User-Agent
+        ],
+    ]);
+
+    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+        teckglobal_bfp_debug("Failed to check GitHub for updates: " . (is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response)));
+        return $transient;
+    }
+
+    $release = json_decode(wp_remote_retrieve_body($response));
+    if (!$release || empty($release->tag_name)) {
+        teckglobal_bfp_debug("Invalid GitHub release data received");
+        return $transient;
+    }
+
+    $new_version = ltrim($release->tag_name, 'v'); // e.g., "v1.1.5" -> "1.1.5"
+    $current_version = TECKGLOBAL_BFP_VERSION;
+
+    if (version_compare($new_version, $current_version, '>')) {
+        $plugin_data = [
+            'slug' => 'teckglobal-brute-force-protect',
+            'new_version' => $new_version,
+            'url' => 'https://github.com/teckglobal/teckglobal-brute-force-protect',
+            'package' => $release->zipball_url,
+        ];
+        $transient->response['teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'] = (object) $plugin_data;
+        teckglobal_bfp_debug("Update available: $current_version -> $new_version");
+    } else {
+        teckglobal_bfp_debug("No update available: Current $current_version, Latest $new_version");
+    }
+
+    return $transient;
+}
+add_filter('pre_set_site_transient_update_plugins', 'teckglobal_bfp_check_for_updates');
+
+////////////////////////////* EOF *////////////////////////////
