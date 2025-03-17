@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.5
+ * Version: 1.0.0
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -298,8 +298,8 @@ function teckglobal_bfp_activate() {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
 
-    // Set default options
-    add_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
+    // Set default options (use update_option to overwrite old paths)
+    update_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', 60);
     add_option('teckglobal_bfp_auto_ban_invalid', 0);

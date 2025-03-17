@@ -197,7 +197,6 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     return false;
 }
 
-// Download GeoIP database from MaxMind
 function teckglobal_bfp_download_geoip(): void {
     $geo_dir = TECKGLOBAL_BFP_GEO_DIR;
     $geo_file = TECKGLOBAL_BFP_GEO_FILE;
@@ -208,19 +207,16 @@ function teckglobal_bfp_download_geoip(): void {
         return;
     }
 
-    if (file_exists($geo_file)) {
-        teckglobal_bfp_debug("GeoIP file already exists at $geo_file; skipping download");
-        return;
-    }
-
     if (!file_exists($geo_dir)) {
         if (!mkdir($geo_dir, 0755, true)) {
-            teckglobal_bfp_debug("Failed to create directory $geo_dir");
+            teckglobal_bfp_debug("Failed to create directory $geo_dir - Check permissions");
             return;
         }
+        teckglobal_bfp_debug("Created directory $geo_dir");
     }
 
     $download_url = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=$api_key&suffix=tar.gz";
+    teckglobal_bfp_debug("Attempting GeoIP download from $download_url");
     $response = wp_remote_get($download_url, ['timeout' => 30]);
 
     if (is_wp_error($response)) {
@@ -228,24 +224,43 @@ function teckglobal_bfp_download_geoip(): void {
         return;
     }
 
-    if (wp_remote_retrieve_response_code($response) !== 200) {
-        teckglobal_bfp_debug("GeoIP download failed: HTTP " . wp_remote_retrieve_response_code($response));
+    $status_code = wp_remote_retrieve_response_code($response);
+    if ($status_code !== 200) {
+        teckglobal_bfp_debug("GeoIP download failed: HTTP $status_code - " . wp_remote_retrieve_body($response));
         return;
     }
 
     $tar_data = wp_remote_retrieve_body($response);
     $tar_path = $geo_dir . 'GeoLite2-City.tar.gz';
-    file_put_contents($tar_path, $tar_data);
+    if (!file_put_contents($tar_path, $tar_data)) {
+        teckglobal_bfp_debug("Failed to write GeoIP tar file to $tar_path - Check write permissions");
+        return;
+    }
+    teckglobal_bfp_debug("Wrote GeoIP tar file to $tar_path");
 
     try {
         $phar = new PharData($tar_path);
         $phar->extractTo($geo_dir, null, true);
-        foreach (glob($geo_dir . '/*/*.mmdb') as $mmdb) {
-            rename($mmdb, $geo_file);
+        $mmdb_files = glob($geo_dir . '/*/*.mmdb');
+        if (empty($mmdb_files)) {
+            teckglobal_bfp_debug("No .mmdb files found after extraction in $geo_dir");
+            return;
+        }
+        foreach ($mmdb_files as $mmdb) {
+            if (rename($mmdb, $geo_file)) {
+                teckglobal_bfp_debug("Moved $mmdb to $geo_file");
+            } else {
+                teckglobal_bfp_debug("Failed to move $mmdb to $geo_file - Check permissions");
+            }
             break;
         }
-        unlink($tar_path);
-        rmdir(glob($geo_dir . '/*')[0]); // Remove extracted subfolder
+        if (!unlink($tar_path)) {
+            teckglobal_bfp_debug("Failed to delete $tar_path");
+        }
+        $extracted_dir = glob($geo_dir . '/*')[0];
+        if (is_dir($extracted_dir) && !rmdir($extracted_dir)) {
+            teckglobal_bfp_debug("Failed to remove extracted directory $extracted_dir");
+        }
         teckglobal_bfp_debug("GeoIP file downloaded and extracted to $geo_file");
     } catch (Exception $e) {
         teckglobal_bfp_debug("GeoIP extraction failed: " . $e->getMessage());
@@ -267,7 +282,7 @@ function teckglobal_bfp_settings_page(): void {
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['teckglobal_bfp_exploit_protection']) ? 1 : 0);
         update_option('teckglobal_bfp_exploit_max_attempts', intval($_POST['teckglobal_bfp_exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['teckglobal_bfp_maxmind_key']));
-        teckglobal_bfp_download_geoip(); // Attempt download after saving API key
+        teckglobal_bfp_download_geoip();
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
