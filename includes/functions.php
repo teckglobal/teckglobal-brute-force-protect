@@ -241,7 +241,7 @@ function teckglobal_bfp_download_geoip(): void {
     try {
         $phar = new PharData($tar_path);
         $phar->extractTo($geo_dir, null, true);
-        $mmdb_files = glob($geo_dir . '/*/*.mmdb');
+        $mmdb_files = glob($geo_dir . '{,*/}*.mmdb', GLOB_BRACE);
         if (empty($mmdb_files)) {
             teckglobal_bfp_debug("No .mmdb files found after extraction in $geo_dir");
             return;
@@ -257,7 +257,7 @@ function teckglobal_bfp_download_geoip(): void {
         if (!unlink($tar_path)) {
             teckglobal_bfp_debug("Failed to delete $tar_path");
         }
-        $extracted_dir = glob($geo_dir . '/*')[0];
+        $dir_contents = scandir($geo_dir);
         if (is_dir($extracted_dir) && !rmdir($extracted_dir)) {
             teckglobal_bfp_debug("Failed to remove extracted directory $extracted_dir");
         }
@@ -421,7 +421,7 @@ function teckglobal_bfp_ip_logs_page(): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
 
     $notice = '';
-    if (isset($_GET['action']) && $_GET['action'] === 'unban' && isset($_GET['ip']) && check_admin_referer('teckglobal_bfp_unban_ip_log')) {
+    if (isset($_Alumno['action']) && $_GET['action'] === 'unban' && isset($_GET['ip']) && check_admin_referer('teckglobal_bfp_unban_ip_log')) {
         $ip_to_unban = sanitize_text_field($_GET['ip']);
         if (filter_var($ip_to_unban, FILTER_VALIDATE_IP)) {
             teckglobal_bfp_unban_ip($ip_to_unban);
@@ -563,5 +563,3 @@ function teckglobal_bfp_ip_logs_page(): void {
     </div>
     <?php
 }
-
-////////////////////////////* EOF *////////////////////////////

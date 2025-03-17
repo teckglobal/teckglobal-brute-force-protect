@@ -370,5 +370,3 @@ function teckglobal_bfp_check_for_updates($transient) {
     return $transient;
 }
 add_filter('pre_set_site_transient_update_plugins', 'teckglobal_bfp_check_for_updates');
-
-////////////////////////////* EOF *////////////////////////////
