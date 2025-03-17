@@ -28,13 +28,16 @@ This plugin is 100% free and open-source. If you find it useful, please consider
 
 Special thanks to xAI-Grok for invaluable assistance in development and debugging.
 
-## Installation
+== Installation ==
+1. Upload the `teckglobal-brute-force-protect` folder to the `/wp-content/plugins/` directory, or install via WordPress Plugins.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
+3. Configure settings under the 'Brute Force Protect' menu in your WordPress admin panel.
+4. (Optional) For geolocation features:
+   - Download `GeoLite2-City.mmdb` from https://dev.maxmind.com/geoip/geoip2/geolite2/ (free account required).
+   - Upload to your server (e.g., `/usr/share/GeoIP/GeoLite2-City.mmdb`) and set permissions: `chmod 644 GeoLite2-City.mmdb; chown www-data:www-data GeoLite2-City.mmdb`.
+   - Enter the path in plugin settings.
 
-1. Upload the `teckglobal-brute-force-protect` folder to the `/wp-content/plugins/` directory.
-2. Run `composer require geoip2/geoip2:~2.0` in the plugin directory (`wp-content/plugins/teckglobal-brute-force-protect/`) to install the MaxMind GeoIP2 library for geolocation features.
-3. Activate the plugin through the 'Plugins' menu in WordPress.
-4. Configure settings under the 'Brute Force Protect' menu in your WordPress admin panel.
-5. (Optional) Provide the path to your GeoLite2-City.mmdb file for geolocation features.
+*Note*: The MaxMind GeoIP2 library is included—no Composer needed unless customizing dependencies. See `vendor/README.md` for advanced setup.
 
 ## Frequently Asked Questions
 
@@ -50,10 +53,12 @@ Geolocation requires a GeoLite2-City.mmdb file (free from MaxMind) and the MaxMi
 ### How does exploit scan protection work?
 When enabled, the plugin monitors requests for common exploit targets (e.g., /phpMyAdmin, /wp-config.php) and bans IPs after a set number of attempts.
 
-== Changelog ==
+## Changelog
 
 ### 1.1.5
-- Test release to verify GitHub-based update mechanism.
+- Bundled `vendor/` with GeoIP2 library for seamless updates.
+- Fixed folder renaming issue during GitHub updates.
+- Improved documentation for GeoIP setup.
 
 ### 1.1.4
 - Preserved ban reason flags (Scan Exploit, Brute Force, Manual Ban) in IP Logs after ban expires for historical tracking.
@@ -104,15 +109,14 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 [GPL-2.0+](https://www.gnu.org/licenses/gpl-2.0.txt)
 
 ### Requirements
-- **MaxMind GeoIP2 Library**: Install via Composer (`geoip2/geoip2:~2.0`).
-- **GeoLite2-City Database**: Download from [MaxMind](https://dev.maxmind.com/geoip/geoip2/geolite2/) (free account required).
-- **PHP 7.4+**: Required for GeoIP2 compatibility.
+- **GeoLite2-City Database**: Optional, download from [MaxMind](https://dev.maxmind.com/geoip/geoip2/geolite2/).
+- **PHP 7.4+**: Required for plugin compatibility.
 
 == Compatibility ==
 - WordPress: 5.0+
 - PHP: 7.4+ (Tested up to 8.3)
 - Database: MySQL/MariaDB (no database interaction required)
-- Server: Nginx
+- Server: Apache/Nginx
 
 == Screenshots ==
 

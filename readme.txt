@@ -25,11 +25,15 @@ This plugin is 100% free and open-source. If you find it useful, please consider
 Special thanks to xAI-Grok for invaluable assistance in development and debugging.
 
 == Installation ==
-1. Upload the `teckglobal-brute-force-protect` folder to the `/wp-content/plugins/` directory.
-2. Run `composer require geoip2/geoip2:~2.0` in the plugin directory (`wp-content/plugins/teckglobal-brute-force-protect/`) to install the MaxMind GeoIP2 library for geolocation features.
-3. Activate the plugin through the 'Plugins' menu in WordPress.
-4. Configure settings under the 'Brute Force Protect' menu in your WordPress admin panel.
-5. (Optional) Provide the path to your GeoLite2-City.mmdb file for geolocation features.
+1. Upload the `teckglobal-brute-force-protect` folder to the `/wp-content/plugins/` directory, or install via WordPress Plugins.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
+3. Configure settings under the 'Brute Force Protect' menu in your WordPress admin panel.
+4. (Optional) For geolocation features:
+   - Download `GeoLite2-City.mmdb` from https://dev.maxmind.com/geoip/geoip2/geolite2/ (free account required).
+   - Upload to your server (e.g., `/usr/share/GeoIP/GeoLite2-City.mmdb`) and set permissions: `chmod 644 GeoLite2-City.mmdb; chown www-data:www-data GeoLite2-City.mmdb`.
+   - Enter the path in plugin settings.
+
+*Note*: The MaxMind GeoIP2 library is included—no Composer needed unless customizing dependencies. See `vendor/README.md` for advanced setup.
 
 == Frequently Asked Questions ==
 = How do I exclude my IP from being banned? =
@@ -50,10 +54,10 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 3. Geolocation Map displaying banned IP locations.
 
 == Changelog ==
-
 = 1.1.5 =
-* Testing WordPress updating for the plugin integration
-* Added GitHub-based plugin update checker for automatic updates from the repository.
+* Bundled `vendor/` with GeoIP2 library for seamless updates.
+* Fixed folder renaming issue during GitHub updates.
+* Improved documentation for GeoIP setup.
 
 = 1.1.4 =
 * Preserved ban reason flags (Scan Exploit, Brute Force, Manual Ban) in IP Logs after ban expires for historical tracking.
@@ -99,8 +103,8 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 * Enhanced debugging with detailed logs in `wp-content/teckglobal-bfp-debug.log`.
 
 == Upgrade Notice ==
-= 1.1.3 =
-Adds a "Manual Ban" column to IP Logs for better tracking of manually banned IPs—update for improved visibility into ban reasons.
+= 1.1.5 =
+Update includes GeoIP2 library and fixes folder naming—installs cleanly with optional GeoIP setup.
 
 == License ==
 This plugin is licensed under the GPLv2 or later. See the License URI for details.
