@@ -17,7 +17,7 @@ A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and ex
 
 TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and optionally integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on a map.
 
-This plugin is 100% free and open-source. If you find this free plugin helpful, please consider supporting us with a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/).
+Completely free and open-source. If you find this plugin helpful, please consider supporting us with a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/).
 
 Special thanks to xAI-Grok for invaluable assistance in development and debugging.
 
@@ -64,60 +64,22 @@ git clone https://github.com/teckglobal/teckglobal-brute-force-protect.git
 cd teckglobal-brute-force-protect
 composer install
 
-### Notes on Changes
-1. **Version**: Set to `1.0.0` for the fresh start, not `1.1.5`.
-2. **Formatting**: Removed WordPress-style `===` headers and `*` bullet points, using Markdown `#` and `-` instead.
-3. **Screenshots**: Converted your `<img>` tags to Markdown `![alt](url)` syntax. The URLs you provided are fine if they’re live by release—otherwise, we can add placeholder images to the repo (e.g., `screenshots/screenshot1.webp`) and adjust paths.
-4. **Changelog**: Added `1.0.0` initial release details. Replace `[Date TBD]` with the actual release date (e.g., `2025-03-25`).
-5. **Content**: Kept your personal touches (like the xAI-Grok shoutout—thanks, brother!) and aligned with your draft’s intent.
+Changelog
+1.0.0 - 2025-03-17
+Initial release with core brute force protection, exploit scan detection, GeoIP integration, and IP management tools.
 
----
+Added admin interface with settings, logs, and interactive map powered by Leaflet.
 
-### How It Looks
-This `README.md` is GitHub-ready—clean, readable, and professional, with all the key info front and center. The changelog gives a clear picture of what `1.0.0` delivers, setting the stage for future updates. The screenshots will pop once those URLs are live (or if we add them to the repo). If you want to tweak anything—like more details in the changelog or a different tone—just say the word!
+Implemented MaxMind API key integration with automatic database updates.
 
----
+Enabled auto-updates via GitHub releases.
+License
+GPL-2.0+
+Credits
+TeckGlobal LLC: Primary development and support.
 
-### Next Steps
-1. **Update Repo**:
-   - Replace `README.md` with this version.
-   - Update `readme.txt` to match (I’ll provide that next if you want, or adapt this one).
-   - Ensure `teckglobal-brute-force-protect.php` header and `TECKGLOBAL_BFP_VERSION` are `1.0.0`.
-
-2. **Release `1.0.0`**:
-   - Delete all GitHub releases.
-   - Tag and ZIP as outlined before:
-     ```bash
-     git add . && git commit -m "Release v1.0.0" && git push
-     git tag v1.0.0 && git push origin v1.0.0
-     composer install
-     zip -r ../teckglobal-brute-force-protect-1.0.0.zip . -x "*.git*"
-     ```
-   - Create release titled “Version 1.0.0”, upload ZIP, mark as “Latest”.
-
-3. **Test**:
-   - Install `1.0.0` fresh, confirm all features work, especially GeoIP and updates.
-
-4. **Future Ideas**:
-   - What features do you want for `1.0.1`? Email alerts, CAPTCHA, or something else?
-
-Let me know what you think of this `README.md`—any tweaks or additions? I’ll whip up the `readme.txt` too if you need it. You’re driving this beast, and I’m loving every minute of it—best teammate ever! :)
-
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-[GPL-2.0+](https://www.gnu.org/licenses/gpl-2.0.txt)
-
-### Requirements
-- **GeoLite2-City Database**: Optional, download from [MaxMind](https://dev.maxmind.com/geoip/geoip2/geolite2/).
-- **PHP 7.4+**: Required for plugin compatibility.
-
-### Compatibility ###
-- WordPress: 5.0+
-- PHP: 7.4+ (Tested up to 8.3)
-- Database: MySQL/MariaDB (no database interaction required)
-- Server: Apache/Nginx
+xAI-Grok: Co-development and debugging.
+Built with love for the WordPress community. Stay secure!
 
 == Screenshots ==
 

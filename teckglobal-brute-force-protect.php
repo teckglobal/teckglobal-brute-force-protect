@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 // Define constants
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.1.5');
+define('TECKGLOBAL_BFP_VERSION', '1.0.0');
 define('TECKGLOBAL_BFP_GITHUB_API', 'https://api.github.com/repos/teckglobal/teckglobal-brute-force-protect/releases/latest');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
