@@ -31,8 +31,6 @@ function teckglobal_bfp_log_attempt(string $ip): void {
         } catch (Exception $e) {
             teckglobal_bfp_debug("GeoIP lookup failed for IP $ip: " . $e->getMessage());
         }
-    } else {
-        teckglobal_bfp_debug("GeoIP database not configured or missing at path: $geo_path");
     }
 
     $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE ip = %s", $ip));
@@ -61,6 +59,9 @@ function teckglobal_bfp_log_attempt(string $ip): void {
                 'country' => $country,
                 'latitude' => $latitude,
                 'longitude' => $longitude,
+                'scan_exploit' => 0,
+                'brute_force' => 0,
+                'manual_ban' => 0
             ]
         );
         teckglobal_bfp_debug("Logged first attempt for IP $ip");
@@ -74,7 +75,7 @@ function teckglobal_bfp_get_attempts(string $ip): int {
     return $row ? (int) $row->attempts : 0;
 }
 
-function teckglobal_bfp_ban_ip(string $ip): void {
+function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $ban_time = (int) get_option('teckglobal_bfp_ban_time', 60);
@@ -103,6 +104,10 @@ function teckglobal_bfp_ban_ip(string $ip): void {
         }
     }
 
+    $scan_exploit = ($reason === 'scan_exploit') ? 1 : 0;
+    $brute_force = ($reason === 'brute_force') ? 1 : 0;
+    $manual_ban = ($reason === 'manual') ? 1 : 0;
+
     $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE ip = %s", $ip));
     if ($row) {
         $wpdb->update(
@@ -112,7 +117,10 @@ function teckglobal_bfp_ban_ip(string $ip): void {
                 'ban_expiry' => $ban_expiry,
                 'country' => $country,
                 'latitude' => $latitude,
-                'longitude' => $longitude
+                'longitude' => $longitude,
+                'scan_exploit' => $scan_exploit,
+                'brute_force' => $brute_force,
+                'manual_ban' => $manual_ban
             ],
             ['ip' => $ip]
         );
@@ -128,10 +136,13 @@ function teckglobal_bfp_ban_ip(string $ip): void {
                 'country' => $country,
                 'latitude' => $latitude,
                 'longitude' => $longitude,
+                'scan_exploit' => $scan_exploit,
+                'brute_force' => $brute_force,
+                'manual_ban' => $manual_ban
             ]
         );
     }
-    teckglobal_bfp_debug("IP $ip banned until $ban_expiry");
+    teckglobal_bfp_debug("IP $ip banned until $ban_expiry for reason: $reason");
 }
 
 function teckglobal_bfp_unban_ip(string $ip): void {
@@ -139,7 +150,7 @@ function teckglobal_bfp_unban_ip(string $ip): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $wpdb->update(
         $table_name,
-        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0],
+        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0, 'scan_exploit' => 0, 'brute_force' => 0, 'manual_ban' => 0],
         ['ip' => $ip]
     );
     teckglobal_bfp_debug("IP $ip unbanned");
@@ -256,7 +267,7 @@ function teckglobal_bfp_manage_ips_page(): void {
     if (isset($_POST['teckglobal_bfp_ban_ip']) && check_admin_referer('teckglobal_bfp_ban_ip')) {
         $ip_to_ban = sanitize_text_field($_POST['ip_to_ban']);
         if (filter_var($ip_to_ban, FILTER_VALIDATE_IP)) {
-            teckglobal_bfp_ban_ip($ip_to_ban);
+            teckglobal_bfp_ban_ip($ip_to_ban, 'manual');
             echo '<div class="updated"><p>IP banned successfully.</p></div>';
         } else {
             echo '<div class="error"><p>Invalid IP address.</p></div>';
@@ -305,7 +316,7 @@ function teckglobal_bfp_get_ip_logs(int $limit = 10, int $page = 1, string $orde
     $limit = absint($limit);
     $page = absint($page);
     $offset = ($page - 1) * $limit;
-    $orderby = in_array($orderby, ['ip', 'timestamp', 'attempts', 'banned', 'ban_expiry', 'country']) ? $orderby : 'timestamp';
+    $orderby = in_array($orderby, ['ip', 'timestamp', 'attempts', 'banned', 'ban_expiry', 'country', 'scan_exploit', 'brute_force', 'manual_ban']) ? $orderby : 'timestamp';
     $order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
 
     $query = $wpdb->prepare(
@@ -341,7 +352,6 @@ function teckglobal_bfp_ip_logs_page(): void {
         }
     }
 
-    // Persist log limit
     $default_limit = 10;
     $valid_limits = [10, 25, 50, 100];
     $limit = get_user_option('teckglobal_bfp_log_limit', get_current_user_id());
@@ -350,7 +360,7 @@ function teckglobal_bfp_ip_logs_page(): void {
         $limit = absint($_GET['log_limit']);
         update_user_option(get_current_user_id(), 'teckglobal_bfp_log_limit', $limit);
     }
-    teckglobal_bfp_debug("Log limit set to: $limit"); // Debug to confirm
+    teckglobal_bfp_debug("Log limit set to: $limit");
 
     $page = isset($_GET['log_page']) ? absint($_GET['log_page']) : 1;
     $page = max(1, $page);
@@ -362,7 +372,7 @@ function teckglobal_bfp_ip_logs_page(): void {
 
     $locations = [];
     foreach ($logs as $log) {
-        if ($log->latitude && $log->longitude && $log->banned) { // Only banned IPs on map
+        if ($log->latitude && $log->longitude && $log->banned) {
             $locations[] = [
                 'lat' => floatval($log->latitude),
                 'lng' => floatval($log->longitude),
@@ -373,7 +383,6 @@ function teckglobal_bfp_ip_logs_page(): void {
     }
     $locations_json = json_encode($locations);
 
-    // Base URL with persisted log_limit
     $base_url = admin_url("admin.php?page=teckglobal-bfp-ip-logs&log_limit=$limit");
 
     ?>
@@ -402,6 +411,9 @@ function teckglobal_bfp_ip_logs_page(): void {
                     <th>Banned</th>
                     <th>Ban Expiry</th>
                     <th>Country</th>
+                    <th>Scan Exploit</th>
+                    <th>Brute Force</th>
+                    <th>Manual Ban</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -420,6 +432,9 @@ function teckglobal_bfp_ip_logs_page(): void {
                         echo '<td data-label="Banned">' . ($log->banned ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Ban Expiry">' . esc_html($log->ban_expiry ?: 'N/A') . '</td>';
                         echo '<td data-label="Country">' . esc_html($log->country) . '</td>';
+                        echo '<td data-label="Scan Exploit">' . ($log->scan_exploit ? 'Yes' : 'No') . '</td>';
+                        echo '<td data-label="Brute Force">' . ($log->brute_force ? 'Yes' : 'No') . '</td>';
+                        echo '<td data-label="Manual Ban">' . ($log->manual_ban ? 'Yes' : 'No') . '</td>';
                         echo '<td data-label="Action">';
                         if ($log->banned) {
                             echo '<a href="' . esc_url($unban_url) . '" class="button button-secondary teckglobal-unban-ip" data-ip="' . esc_attr($log->ip) . '">Remove Ban</a>';
@@ -430,7 +445,7 @@ function teckglobal_bfp_ip_logs_page(): void {
                         echo '</tr>';
                     }
                 } else {
-                    echo '<tr><td colspan="7">No logs found.</td></tr>';
+                    echo '<tr><td colspan="10">No logs found.</td></tr>';
                 }
                 ?>
             </tbody>
@@ -456,7 +471,6 @@ function teckglobal_bfp_ip_logs_page(): void {
         <script>
             console.log('Locations data:', <?php echo $locations_json; ?>);
             var locations = <?php echo $locations_json; ?>;
-            // Force dropdown to match persisted limit on page load
             document.addEventListener('DOMContentLoaded', function() {
                 var select = document.getElementById('log_limit');
                 var currentLimit = <?php echo json_encode($limit); ?>;

@@ -3,7 +3,7 @@ Contributors: teckglobal, xai-grok
 Tags: security, brute force, ip ban, geolocation, wordpress security, exploit protection
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 1.1.1
+Stable tag: 1.1.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
@@ -50,8 +50,15 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 3. Geolocation Map displaying banned IP locations.
 
 == Changelog ==
+= 1.1.3 =
+* Added "Manual Ban" column to IP Logs & Map page to distinguish manually banned IPs.
+* Improved ban reason tracking with separate indicators for manual, brute force, and exploit scan bans.
+* Bumped version to reflect new feature.
+
 = 1.1.2 =
-* Fixed cosmetic issue with log limit dropdown not reflecting persisted value on page reload.
+* Added "Scan Exploit" and "Brute Force" columns to IP Logs & Map page to show ban reason.
+* Fixed unban functionality to ensure "Remove Ban" button works correctly.
+* Improved ban reason tracking for exploit scans and brute force attempts.
 
 = 1.1.1 =
 * Added "Unban" button to IP Logs page.
@@ -82,8 +89,8 @@ When enabled, the plugin monitors requests for common exploit targets (e.g., /ph
 * Enhanced debugging with detailed logs in `wp-content/teckglobal-bfp-debug.log`.
 
 == Upgrade Notice ==
-= 1.1.1 =
-Fixes unban option, geolocation for manual bans, map display, and log limit UI—update for full functionality and improved usability.
+= 1.1.3 =
+Adds a "Manual Ban" column to IP Logs for better tracking of manually banned IPs—update for improved visibility into ban reasons.
 
 == License ==
 This plugin is licensed under the GPLv2 or later. See the License URI for details.

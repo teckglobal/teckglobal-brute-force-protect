@@ -95,3 +95,43 @@
         margin-top: 5px;
     }
 }
+
+/* Leaflet layer control styling */
+.leaflet-control-layers {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    padding: 5px;
+}
+
+.leaflet-control-layers-base label {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.leaflet-control-layers-base input[type="radio"] {
+    display: none; /* Hide default radio buttons */
+}
+
+/* Aerial layer icon (using layers.png as a fallback) */
+.leaflet-control-layers-base label:nth-child(1)::before {
+    content: url('images/layers.png');
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+/* Terrain layer icon (using layers.png as a temporary fallback) */
+.leaflet-control-layers-base label:nth-child(2)::before {
+    content: url('images/terrain-icon.webp'); /* Replace with terrain-icon.png once added */
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+/* Hover effect for layer options */
+.leaflet-control-layers-base label:hover {
+    background: #f5f5f5;
+}

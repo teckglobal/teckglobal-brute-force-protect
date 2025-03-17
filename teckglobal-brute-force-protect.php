@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.1
+ * Version: 1.1.3
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -77,8 +77,8 @@ function teckglobal_bfp_login_failed($username) {
     $attempts = teckglobal_bfp_get_attempts($ip);
 
     if ($attempts >= $max_attempts) {
-        teckglobal_bfp_ban_ip($ip);
-        teckglobal_bfp_debug("IP $ip exceeded $max_attempts attempts. Banned.");
+        teckglobal_bfp_ban_ip($ip, 'brute_force');
+        teckglobal_bfp_debug("IP $ip exceeded $max_attempts attempts. Banned for brute force.");
     } else {
         teckglobal_bfp_debug("IP $ip failed login, attempts: $attempts/$max_attempts");
     }
@@ -95,7 +95,7 @@ function teckglobal_bfp_login_success($username) {
     if ($row && $row->banned == 1 && $row->ban_expiry && current_time('mysql') < $row->ban_expiry) {
         teckglobal_bfp_debug("IP $ip is banned with active expiry; not resetting ban status");
     } else {
-        $wpdb->update($table_name, ['attempts' => 0, 'banned' => 0, 'ban_expiry' => null], ['ip' => $ip]);
+        $wpdb->update($table_name, ['attempts' => 0, 'banned' => 0, 'ban_expiry' => null, 'scan_exploit' => 0, 'brute_force' => 0, 'manual_ban' => 0], ['ip' => $ip]);
         teckglobal_bfp_debug("Reset attempts and ban status for IP $ip on successful login");
     }
 }
@@ -115,8 +115,8 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
     if ($auto_ban_invalid && !username_exists($username) && !email_exists($username)) {
         teckglobal_bfp_debug("Invalid username '$username' detected from IP $ip");
         teckglobal_bfp_log_attempt($ip);
-        teckglobal_bfp_ban_ip($ip);
-        teckglobal_bfp_debug("IP $ip auto-banned for invalid username");
+        teckglobal_bfp_ban_ip($ip, 'brute_force');
+        teckglobal_bfp_debug("IP $ip auto-banned for invalid username (brute force)");
     } else {
         teckglobal_bfp_debug("Username '$username' is valid or auto-ban is off; no action taken");
     }
@@ -152,7 +152,7 @@ function teckglobal_bfp_check_exploit_scans() {
             $attempts = teckglobal_bfp_get_attempts($ip);
 
             if ($attempts >= $max_attempts) {
-                teckglobal_bfp_ban_ip($ip);
+                teckglobal_bfp_ban_ip($ip, 'scan_exploit');
                 teckglobal_bfp_debug("IP $ip banned for exceeding $max_attempts exploit scan attempts");
             } else {
                 teckglobal_bfp_debug("IP $ip exploit scan attempt logged, attempts: $attempts/$max_attempts");
@@ -193,7 +193,7 @@ function teckglobal_bfp_block_banned_ips() {
 }
 add_action('init', 'teckglobal_bfp_block_banned_ips', 1);
 
-// Register admin menu (removed Geolocation Map)
+// Register admin menu
 function teckglobal_bfp_admin_menu() {
     add_menu_page(
         'TeckGlobal BFP',
@@ -233,17 +233,13 @@ add_action('admin_menu', 'teckglobal_bfp_admin_menu');
 
 // Enqueue admin assets
 function teckglobal_bfp_enqueue_admin_assets($hook) {
-    // Log the hook for debugging
     teckglobal_bfp_debug("Enqueue hook triggered: $hook");
-
-    // Load assets on all TeckGlobal BFP pages
     if (strpos($hook, 'teckglobal-bfp') !== false) {
-        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], '1.1.0');
-        wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
-        wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
-        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], '1.1.0', true);
+        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], '1.1.3');
+        wp_enqueue_style('leaflet-css', TECKGLOBAL_BFP_URL . 'assets/css/leaflet.css', [], '1.9.4');
+        wp_enqueue_script('leaflet-js', TECKGLOBAL_BFP_URL . 'assets/js/leaflet.js', [], '1.9.4', true);
+        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], '1.1.3', true);
 
-        // Localize script with AJAX data for IP Logs page
         if (strpos($hook, 'teckglobal-bfp-ip-logs') !== false) {
             wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
@@ -288,6 +284,9 @@ function teckglobal_bfp_activate() {
         country VARCHAR(100) DEFAULT 'Unknown',
         latitude DECIMAL(10,7) DEFAULT NULL,
         longitude DECIMAL(10,7) DEFAULT NULL,
+        scan_exploit TINYINT(1) NOT NULL DEFAULT 0,
+        brute_force TINYINT(1) NOT NULL DEFAULT 0,
+        manual_ban TINYINT(1) NOT NULL DEFAULT 0,
         PRIMARY KEY (id),
         UNIQUE KEY ip (ip)
     ) $charset_collate;";

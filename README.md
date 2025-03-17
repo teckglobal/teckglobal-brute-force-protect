@@ -5,7 +5,7 @@
  * Donate link: https://teck-global.com/buy-me-a-coffee/
  * Requires at least: 5.0
  * Tested up to: 6.7
- * Stable tag: 1.1.1
+ * Stable tag: 1.1.3
  * Requires PHP: 7.4 or later
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,11 @@ Geolocation requires a GeoLite2-City.mmdb file (free from MaxMind) and the MaxMi
 When enabled, the plugin monitors requests for common exploit targets (e.g., /phpMyAdmin, /wp-config.php) and bans IPs after a set number of attempts.
 
 == Changelog ==
+
+### 1.1.3
+- Added "Manual Ban" column to IP Logs & Map page to distinguish manually banned IPs.
+- Improved ban reason tracking with separate indicators for manual, brute force, and exploit scan bans.
+- Bumped version to reflect new feature.
 
 ### 1.1.2 
 - Fixed cosmetic issue with log limit dropdown not reflecting persisted value on page reload.
