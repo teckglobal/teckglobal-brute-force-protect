@@ -15,7 +15,7 @@ function teckglobal_bfp_log_attempt(string $ip): void {
         return;
     }
 
-    $geo_path = get_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb');
+    $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     $country = 'Unknown';
     $latitude = null;
     $longitude = null;
@@ -86,7 +86,7 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
         return;
     }
 
-    $geo_path = get_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb');
+    $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     $country = 'Unknown';
     $latitude = null;
     $longitude = null;
@@ -150,7 +150,7 @@ function teckglobal_bfp_unban_ip(string $ip): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $wpdb->update(
         $table_name,
-        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0], // Preserve scan_exploit, brute_force, manual_ban
+        ['banned' => 0, 'ban_expiry' => null, 'attempts' => 0],
         ['ip' => $ip]
     );
     teckglobal_bfp_debug("IP $ip unbanned, ban reason flags preserved");
@@ -165,7 +165,7 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
     $row = $wpdb->get_row($wpdb->prepare("SELECT banned, ban_expiry FROM $table_name WHERE ip = %s", $ip));
     if ($row && $row->banned == 1) {
         if ($row->ban_expiry && current_time('mysql') > $row->ban_expiry) {
-            teckglobal_bfp_unban_ip($ip); // Unban but keep ban reason flags
+            teckglobal_bfp_unban_ip($ip);
             teckglobal_bfp_debug("IP $ip ban expired, unbanned with preserved flags.");
             return false;
         }
@@ -197,6 +197,62 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     return false;
 }
 
+// Download GeoIP database from MaxMind
+function teckglobal_bfp_download_geoip(): void {
+    $geo_dir = TECKGLOBAL_BFP_GEO_DIR;
+    $geo_file = TECKGLOBAL_BFP_GEO_FILE;
+    $api_key = get_option('teckglobal_bfp_maxmind_key', '');
+
+    if (empty($api_key)) {
+        teckglobal_bfp_debug("MaxMind API key not set; skipping GeoIP download");
+        return;
+    }
+
+    if (file_exists($geo_file)) {
+        teckglobal_bfp_debug("GeoIP file already exists at $geo_file; skipping download");
+        return;
+    }
+
+    if (!file_exists($geo_dir)) {
+        if (!mkdir($geo_dir, 0755, true)) {
+            teckglobal_bfp_debug("Failed to create directory $geo_dir");
+            return;
+        }
+    }
+
+    $download_url = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=$api_key&suffix=tar.gz";
+    $response = wp_remote_get($download_url, ['timeout' => 30]);
+
+    if (is_wp_error($response)) {
+        teckglobal_bfp_debug("GeoIP download failed: " . $response->get_error_message());
+        return;
+    }
+
+    if (wp_remote_retrieve_response_code($response) !== 200) {
+        teckglobal_bfp_debug("GeoIP download failed: HTTP " . wp_remote_retrieve_response_code($response));
+        return;
+    }
+
+    $tar_data = wp_remote_retrieve_body($response);
+    $tar_path = $geo_dir . 'GeoLite2-City.tar.gz';
+    file_put_contents($tar_path, $tar_data);
+
+    try {
+        $phar = new PharData($tar_path);
+        $phar->extractTo($geo_dir, null, true);
+        foreach (glob($geo_dir . '/*/*.mmdb') as $mmdb) {
+            rename($mmdb, $geo_file);
+            break;
+        }
+        unlink($tar_path);
+        rmdir(glob($geo_dir . '/*')[0]); // Remove extracted subfolder
+        teckglobal_bfp_debug("GeoIP file downloaded and extracted to $geo_file");
+    } catch (Exception $e) {
+        teckglobal_bfp_debug("GeoIP extraction failed: " . $e->getMessage());
+    }
+}
+add_action('teckglobal_bfp_update_geoip', 'teckglobal_bfp_download_geoip');
+
 function teckglobal_bfp_settings_page(): void {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have sufficient permissions to access this page.');
@@ -210,6 +266,8 @@ function teckglobal_bfp_settings_page(): void {
         update_option('teckglobal_bfp_excluded_ips', sanitize_textarea_field($_POST['teckglobal_bfp_excluded_ips']));
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['teckglobal_bfp_exploit_protection']) ? 1 : 0);
         update_option('teckglobal_bfp_exploit_max_attempts', intval($_POST['teckglobal_bfp_exploit_max_attempts']));
+        update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['teckglobal_bfp_maxmind_key']));
+        teckglobal_bfp_download_geoip(); // Attempt download after saving API key
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
@@ -221,8 +279,8 @@ function teckglobal_bfp_settings_page(): void {
             <h3>General Settings</h3>
             <p>
                 <label for="teckglobal_bfp_geo_path">GeoLite2 Database Path:</label><br />
-                <input type="text" name="teckglobal_bfp_geo_path" value="<?php echo esc_attr(get_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb')); ?>" size="50" /><br />
-                <small>Path to GeoLite2-City.mmdb (optional, for geolocation features).</small>
+                <input type="text" name="teckglobal_bfp_geo_path" value="<?php echo esc_attr(get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE)); ?>" size="50" /><br />
+                <small>Default: <?php echo esc_html(TECKGLOBAL_BFP_GEO_FILE); ?></small>
             </p>
             <p>
                 <label for="teckglobal_bfp_max_attempts">Max Login Attempts Before Ban:</label><br />
@@ -240,6 +298,12 @@ function teckglobal_bfp_settings_page(): void {
                 <label for="teckglobal_bfp_excluded_ips">Excluded IPs/Subnets (one per line):</label><br />
                 <textarea name="teckglobal_bfp_excluded_ips" rows="5" cols="50"><?php echo esc_textarea(get_option('teckglobal_bfp_excluded_ips', '')); ?></textarea><br />
                 <small>Example: 192.168.1.1 or 10.0.0.0/24</small>
+            </p>
+            <h3>GeoIP Settings</h3>
+            <p>
+                <label for="teckglobal_bfp_maxmind_key">MaxMind License Key:</label><br />
+                <input type="text" name="teckglobal_bfp_maxmind_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_maxmind_key', '')); ?>" size="50" /><br />
+                <small>Get your free key from <a href="https://www.maxmind.com/en/geolite2/signup" target="_blank">MaxMind GeoLite2 Signup</a>. Required for automatic GeoIP downloads (updates Tuesdays and Fridays).</small>
             </p>
             <h3>Exploit Scan Protection</h3>
             <p>
@@ -425,7 +489,7 @@ function teckglobal_bfp_ip_logs_page(): void {
                             "$base_url&action=unban&ip=" . urlencode($log->ip) . "&log_page=$page",
                             'teckglobal_bfp_unban_ip_log'
                         );
-                        $is_banned = teckglobal_bfp_is_ip_banned($log->ip); // Check current ban status
+                        $is_banned = teckglobal_bfp_is_ip_banned($log->ip);
                         echo '<tr>';
                         echo '<td data-label="IP Address">' . esc_html($log->ip) . '</td>';
                         echo '<td data-label="Last Attempt">' . esc_html($log->timestamp) . '</td>';

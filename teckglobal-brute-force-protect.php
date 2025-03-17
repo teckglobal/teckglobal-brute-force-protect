@@ -26,6 +26,8 @@ define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
 define('TECKGLOBAL_BFP_VERSION', '1.1.5');
 define('TECKGLOBAL_BFP_GITHUB_API', 'https://api.github.com/repos/teckglobal/teckglobal-brute-force-protect/releases/latest');
+define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
+define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
 // Include functions file
 require_once TECKGLOBAL_BFP_PATH . 'includes/functions.php';
@@ -270,7 +272,7 @@ function teckglobal_bfp_ajax_unban_ip() {
 }
 add_action('wp_ajax_teckglobal_bfp_unban_ip', 'teckglobal_bfp_ajax_unban_ip');
 
-// Database setup on activation
+// Database setup and GeoIP download on activation
 function teckglobal_bfp_activate() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -297,19 +299,29 @@ function teckglobal_bfp_activate() {
     dbDelta($sql);
 
     // Set default options
-    add_option('teckglobal_bfp_geo_path', '/usr/share/GeoIP/GeoLite2-City.mmdb');
+    add_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', 60);
     add_option('teckglobal_bfp_auto_ban_invalid', 0);
     add_option('teckglobal_bfp_excluded_ips', '');
     add_option('teckglobal_bfp_exploit_protection', 0);
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
+    add_option('teckglobal_bfp_maxmind_key', '');
+
+    // Download GeoIP file if not present
+    teckglobal_bfp_download_geoip();
+
+    // Schedule cron for GeoIP updates (Tues/Fri, 1 AM UTC)
+    if (!wp_next_scheduled('teckglobal_bfp_update_geoip')) {
+        wp_schedule_event(strtotime('next Tuesday 01:00:00 UTC'), 'weekly', 'teckglobal_bfp_update_geoip');
+        wp_schedule_event(strtotime('next Friday 01:00:00 UTC'), 'weekly', 'teckglobal_bfp_update_geoip');
+    }
 }
 register_activation_hook(__FILE__, 'teckglobal_bfp_activate');
 
 // Clean up on deactivation
 function teckglobal_bfp_deactivate() {
-    // Optionally remove options or table here if desired
+    wp_clear_scheduled_hook('teckglobal_bfp_update_geoip');
 }
 register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
 
@@ -323,7 +335,7 @@ function teckglobal_bfp_check_for_updates($transient) {
         'timeout' => 10,
         'headers' => [
             'Accept' => 'application/vnd.github.v3+json',
-            'User-Agent' => 'TeckGlobal-Brute-Force-Protect/' . TECKGLOBAL_BFP_VERSION, // GitHub requires a User-Agent
+            'User-Agent' => 'TeckGlobal-Brute-Force-Protect/' . TECKGLOBAL_BFP_VERSION,
         ],
     ]);
 
@@ -338,7 +350,7 @@ function teckglobal_bfp_check_for_updates($transient) {
         return $transient;
     }
 
-    $new_version = ltrim($release->tag_name, 'v'); // e.g., "v1.1.5" -> "1.1.5"
+    $new_version = ltrim($release->tag_name, 'v');
     $current_version = TECKGLOBAL_BFP_VERSION;
 
     if (version_compare($new_version, $current_version, '>')) {
@@ -350,6 +362,7 @@ function teckglobal_bfp_check_for_updates($transient) {
         ];
         $transient->response['teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'] = (object) $plugin_data;
         teckglobal_bfp_debug("Update available: $current_version -> $new_version");
+        teckglobal_bfp_download_geoip(); // Check GeoIP on plugin update
     } else {
         teckglobal_bfp_debug("No update available: Current $current_version, Latest $new_version");
     }
