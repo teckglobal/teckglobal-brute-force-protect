@@ -248,6 +248,7 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
             wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('teckglobal_bfp_unban_nonce'),
+                'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
             ]);
         }
     }
@@ -370,13 +371,14 @@ function teckglobal_bfp_check_for_updates($transient) {
     $current_version = TECKGLOBAL_BFP_VERSION;
 
     if (version_compare($new_version, $current_version, '>')) {
-        $plugin_data = [
+        $plugin_data = (object) [
             'slug' => 'teckglobal-brute-force-protect',
             'new_version' => $new_version,
             'url' => 'https://github.com/teckglobal/teckglobal-brute-force-protect',
             'package' => $release->zipball_url,
+            'plugin' => 'teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'
         ];
-        $transient->response['teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'] = (object) $plugin_data;
+        $transient->response['teckglobal-brute-force-protect/teckglobal-brute-force-protect.php'] = $plugin_data;
         teckglobal_bfp_debug("Update available: $current_version -> $new_version");
         teckglobal_bfp_download_geoip();
     } else {

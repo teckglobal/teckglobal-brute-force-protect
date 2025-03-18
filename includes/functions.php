@@ -199,7 +199,6 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     return false;
 }
 
-// Recursive directory removal function
 function teckglobal_bfp_remove_dir(string $dir): bool {
     if (!is_dir($dir)) {
         return true;
@@ -517,7 +516,7 @@ function teckglobal_bfp_ip_logs_page(): void {
             ];
         }
     }
-    teckglobal_bfp_debug("Locations for map: " . json_encode($locations)); // Debug map data
+    teckglobal_bfp_debug("Locations data prepared for map: " . json_encode($locations));
     $locations_json = json_encode($locations);
 
     $base_url = admin_url("admin.php?page=teckglobal-bfp-ip-logs&log_limit=$limit");

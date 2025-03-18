@@ -1,11 +1,36 @@
+console.log('script.js loaded');
+console.log('Leaflet available:', typeof L !== 'undefined' ? 'Yes' : 'No');
+
 document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('map') && typeof locations !== 'undefined') {
-        var map = L.map('map').setView([51.505, -0.09], 2); // Default center (world view)
-        var markers = {};
+    if (document.getElementById('map')) {
+        console.log('Map container found, initializing...');
+
+        // Hardcoded absolute URLs
+        const customIcon = L.icon({
+            iconUrl: 'marker-icon.png',
+            iconRetinaUrl: 'marker-icon-2x.png',
+            shadowUrl: 'marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+        console.log('Hardcoded icon URLs set:', {
+            iconUrl: 'marker-icon.png',
+            iconRetinaUrl: 'marker-icon-2x.png',
+            shadowUrl: 'marker-shadow.png'
+        });
+
+        var map = L.map('map').setView([51.505, -0.09], 2);
+        map.invalidateSize();
+        console.log('Map initialized at [51.505, -0.09], zoom 2');
 
         var aerialLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+        console.log('Aerial layer added');
+        aerialLayer.on('tileload', function() { console.log('Tile loaded'); });
+        aerialLayer.on('tileerror', function(e) { console.error('Tile error:', e); });
 
         var terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
@@ -16,11 +41,23 @@ document.addEventListener('DOMContentLoaded', function() {
             "Terrain": terrainLayer
         };
         L.control.layers(baseLayers).addTo(map);
+        console.log('Layer control added');
 
-        locations.forEach(function(location) {
-            var marker = L.marker([location.lat, location.lng]).addTo(map);
-            marker.bindPopup("<b>IP:</b> " + location.ip + "<br><b>Country:</b> " + location.country);
-            markers[location.ip] = marker;
+        var locationsData = typeof locations !== 'undefined' && locations.length > 0 ? locations : [
+            { lat: 51.505, lng: -0.09, ip: 'Test IP', country: 'Test Country' }
+        ];
+        console.log('Using locations:', locationsData);
+
+        var markers = {};
+        locationsData.forEach(function(location) {
+            if (location.lat && location.lng) {
+                var marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map);
+                marker.bindPopup("<b>IP:</b> " + location.ip + "<br><b>Country:</b> " + location.country);
+                markers[location.ip] = marker;
+                console.log('Marker added for IP:', location.ip, 'at', location.lat, location.lng);
+            } else {
+                console.warn('Invalid location data:', location);
+            }
         });
 
         document.querySelectorAll('.teckglobal-unban-ip').forEach(function(button) {
@@ -45,12 +82,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 console.log('Marker removed for IP: ' + ip);
                             }
                             var row = button.closest('tr');
-                            row.querySelector('td:nth-child(4)').textContent = 'No'; // Banned column
-                            row.querySelector('td:nth-child(5)').textContent = 'N/A'; // Ban Expiry column
-                            row.querySelector('td:nth-child(7)').textContent = 'No'; // Scan Exploit column
-                            row.querySelector('td:nth-child(8)').textContent = 'No'; // Brute Force column
-                            row.querySelector('td:nth-child(9)').textContent = 'No'; // Manual Ban column
-                            row.querySelector('td:nth-child(10)').innerHTML = 'N/A'; // Action column
+                            row.querySelector('td:nth-child(4)').textContent = 'No';
+                            row.querySelector('td:nth-child(5)').textContent = 'N/A';
+                            row.querySelector('td:nth-child(7)').textContent = 'No';
+                            row.querySelector('td:nth-child(8)').textContent = 'No';
+                            row.querySelector('td:nth-child(9)').textContent = 'No';
+                            row.querySelector('td:nth-child(10)').innerHTML = 'N/A';
                         } else {
                             console.error('Unban failed:', response.data.message);
                         }
@@ -62,6 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     } else {
-        console.log('Map element or locations data not found.');
+        console.error('Map element not found.');
     }
 });
