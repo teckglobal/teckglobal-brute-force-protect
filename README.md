@@ -84,11 +84,14 @@ xAI-Grok: Co-development and debugging.
 
 == Screenshots ==
 
-1. **Settings Page**: Configure max attempts, ban duration, and excluded IPs. 
+1. **Settings Page**: Configure max attempts, ban duration, and excluded IPs.
+
 <img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp" alt="Settings Main Page" style="width:521px;height:771px;">
 
 2. **Manage IPs**: Add or Remove IP to the Ban List.
+
 <img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp" alt="Settings Main Page" style="width:324px;height:296px;">
 
 3. **IP Logs & Map**: Logs of IP's banned with an interactive map showing banned IP locations.
+
 <img src="https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp" alt="Settings Main Page" style="width:700px;height:296px;">
