@@ -13,7 +13,7 @@ A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and ex
 
 == Description ==
 
-TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and optionally integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on a map.
+TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on a map.
 
 Completely free and open-source. If you find this plugin helpful, please consider supporting us with a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/).
 
@@ -53,18 +53,18 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 
 == Screenshots ==
 
-1. Configure max attempts, ban duration, and excluded IPs in the Settings page.  
+1. Configure max attempts, ban duration, and excluded IPs in the Settings page.
    [screenshot url: https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp]
 
-2. Add or remove IPs from the ban list in Manage IPs.  
+2. Add or remove IPs from the ban list in Manage IPs.
    [screenshot url: https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp]
 
-3. View logs of banned IPs with an interactive map in IP Logs & Map.  
+3. View logs of banned IPs with an interactive map in IP Logs & Map.
    [screenshot url: https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp]
 
 == Changelog ==
 
-= 1.0.0 - 2025-03-17 =
+= 1.0.0 - 2025-03-18 =
 * Initial release with IP tracking, banning, geolocation, and exclusion features.
 * Added MaxMind API key integration with automatic database updates.
 * Implemented admin interface with settings, logs, and interactive map.

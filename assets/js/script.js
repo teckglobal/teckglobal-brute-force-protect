@@ -5,32 +5,37 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('map')) {
         console.log('Map container found, initializing...');
 
-        // Hardcoded absolute URLs
+        // Check for teckglobal_bfp_ajax and use fallback if undefined
+        let imagePath;
+        if (typeof teckglobal_bfp_ajax !== 'undefined' && teckglobal_bfp_ajax.image_path) {
+            imagePath = teckglobal_bfp_ajax.image_path;
+        } else {
+            console.warn('teckglobal_bfp_ajax is not defined; using fallback image path');
+            imagePath = '/wp-content/plugins/teckglobal-brute-force-protect/assets/css/images/';
+        }
+
         const customIcon = L.icon({
-            iconUrl: 'marker-icon.png',
-            iconRetinaUrl: 'marker-icon-2x.png',
-            shadowUrl: 'marker-shadow.png',
+            iconUrl: imagePath + 'marker-icon.png',
+            iconRetinaUrl: imagePath + 'marker-icon-2x.png',
+            shadowUrl: imagePath + 'marker-shadow.png',
             iconSize: [25, 41],
             iconAnchor: [12, 41],
             popupAnchor: [1, -34],
             shadowSize: [41, 41]
         });
-        console.log('Hardcoded icon URLs set:', {
-            iconUrl: 'marker-icon.png',
-            iconRetinaUrl: 'marker-icon-2x.png',
-            shadowUrl: 'marker-shadow.png'
+        console.log('Icon URLs set:', {
+            iconUrl: imagePath + 'marker-icon.png',
+            iconRetinaUrl: imagePath + 'marker-icon-2x.png',
+            shadowUrl: imagePath + 'marker-shadow.png'
         });
 
         var map = L.map('map').setView([51.505, -0.09], 2);
-        map.invalidateSize();
         console.log('Map initialized at [51.505, -0.09], zoom 2');
 
         var aerialLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         console.log('Aerial layer added');
-        aerialLayer.on('tileload', function() { console.log('Tile loaded'); });
-        aerialLayer.on('tileerror', function(e) { console.error('Tile error:', e); });
 
         var terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
@@ -64,7 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 var ip = this.getAttribute('data-ip');
-                var url = this.getAttribute('href');
+
+                if (typeof teckglobal_bfp_ajax === 'undefined') {
+                    console.error('teckglobal_bfp_ajax not defined; AJAX unban disabled');
+                    return;
+                }
 
                 jQuery.ajax({
                     url: teckglobal_bfp_ajax.ajax_url,

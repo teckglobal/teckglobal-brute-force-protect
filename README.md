@@ -1,21 +1,22 @@
-=== TeckGlobal Brute Force Protect ===
- * Contributors: TeckGlobal LLC, xAI-Grok
- * Author URI: https://teck-global.com
- * Plugin URI: https://teck-global.com/wordpress-plugins
- * Donate link: https://teck-global.com/buy-me-a-coffee/
- * Requires at least: 5.0
- * Tested up to: 6.7
- * Stable tag: 1.1.5
- * Requires PHP: 7.4 or later
- * License: GPLv2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
+# TeckGlobal Brute Force Protect
+
+- **Contributors**: TeckGlobal LLC, xAI-Grok
+- **Author URI**: [https://teck-global.com](https://teck-global.com)
+- **Plugin URI**: [https://teck-global.com/wordpress-plugins](https://teck-global.com/wordpress-plugins)
+- **Donate link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
+- **Requires at least**: 5.0
+- **Tested up to**: 6.7
+- **Stable tag**: 1.0.0
+- **Requires PHP**: 7.4 or later
+- **License**: GPLv2 or later
+- **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
+- **Tags**: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
 
 A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans, featuring IP management and geolocation capabilities.
 
 ## Description
 
-TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and optionally integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on a map.
+TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on an interactive map powered by Leaflet.
 
 Completely free and open-source. If you find this plugin helpful, please consider supporting us with a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/).
 
@@ -25,7 +26,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 
 - **Brute Force Protection**: Logs failed login attempts and bans IPs after a set number of tries.
 - **Exploit Scan Detection**: Blocks IPs scanning for vulnerabilities (e.g., `phpMyAdmin`, `wp-config.php`).
-- **GeoIP Integration**: Automatically downloads MaxMind GeoLite2 City database (with a free license key) to display attacker countries and coordinates.
+- **GeoIP Integration**: Automatically downloads MaxMind GeoLite2 City database (with a free license key) to display attacker locations.
 - **IP Management**: Manually ban/unban IPs and exclude trusted IPs or subnets.
 - **Logs & Map**: View detailed logs and a Leaflet-powered map of banned IP locations.
 - **Auto-Updates**: Checks GitHub for new releases seamlessly within WordPress.

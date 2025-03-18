@@ -14,7 +14,7 @@
  * Requires PHP: 7.4 or later
  * WordPress Available: yes
  * Requires License: no
-*/
+ */
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -238,20 +238,32 @@ add_action('admin_menu', 'teckglobal_bfp_admin_menu');
 // Enqueue admin assets
 function teckglobal_bfp_enqueue_admin_assets($hook) {
     teckglobal_bfp_debug("Enqueue hook triggered: $hook");
-    if (strpos($hook, 'teckglobal-bfp') !== false) {
-        wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], TECKGLOBAL_BFP_VERSION);
-        wp_enqueue_style('leaflet-css', TECKGLOBAL_BFP_URL . 'assets/css/leaflet.css', [], '1.9.4');
-        wp_enqueue_script('leaflet-js', TECKGLOBAL_BFP_URL . 'assets/js/leaflet.js', [], '1.9.4', true);
-        wp_enqueue_script('teckglobal_bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], TECKGLOBAL_BFP_VERSION, true);
 
-        if (strpos($hook, 'teckglobal-bfp-ip-logs') !== false) {
-            wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', [
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('teckglobal_bfp_unban_nonce'),
-                'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
-            ]);
-        }
+    // Only enqueue on plugin-specific pages
+    if (strpos($hook, 'teckglobal-bfp') === false) {
+        return;
     }
+
+    // Enqueue plugin styles
+    wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], TECKGLOBAL_BFP_VERSION);
+
+    // Enqueue Leaflet from CDN
+    wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
+    wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
+
+    // Localize script for the IP logs page *before* enqueuing script.js
+    if ($hook === 'teckglobal-bfp_page_teckglobal-bfp-ip-logs') {
+        $localize_data = [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('teckglobal_bfp_unban_nonce'),
+            'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
+        ];
+        wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', $localize_data);
+        teckglobal_bfp_debug("Localized teckglobal_bfp_ajax for hook $hook: " . json_encode($localize_data));
+    }
+
+    // Enqueue local script.js
+    wp_enqueue_script('teckglobal_bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['leaflet-js', 'jquery'], TECKGLOBAL_BFP_VERSION, true);
 }
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
 
