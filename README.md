@@ -29,7 +29,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 - **GeoIP Integration**: Automatically downloads MaxMind GeoLite2 City database (with a free license key) to display attacker locations.
 - **IP Management**: Manually ban/unban IPs and exclude trusted IPs or subnets.
 - **Logs & Map**: View detailed logs and a Leaflet-powered map of banned IP locations.
-- **Auto-Updates**: Checks GitHub for new releases seamlessly within WordPress.
+- **Auto-Updates**: Checks GitHub for new releases seamlessly within WordPress (configurable).
 
 ## Installation
 
@@ -53,6 +53,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 - **Auto-Ban Invalid Usernames**: Enable to ban IPs using non-existent usernames.
 - **Excluded IPs**: Add IPs or subnets (e.g., `192.168.1.1`, `10.0.0.0/24`) to whitelist.
 - **MaxMind Key**: Enter your key for automatic GeoIP database updates (Tuesdays/Fridays).
+- **Auto-Updates**: Enable/disable update checks from GitHub.
 
 ## Development
 
@@ -66,14 +67,14 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
-1.0.0 - 2025-03-17
+1.0.0 - 2025-03-18
 Initial release with core brute force protection, exploit scan detection, GeoIP integration, and IP management tools.
 
 Added admin interface with settings, logs, and interactive map powered by Leaflet.
 
 Implemented MaxMind API key integration with automatic database updates.
 
-Enabled auto-updates via GitHub releases.
+Enabled configurable auto-updates via GitHub releases.
 License
 GPL-2.0+
 Credits

@@ -324,8 +324,9 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_exploit_protection', 0);
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
     add_option('teckglobal_bfp_maxmind_key', '');
+    add_option('teckglobal_bfp_enable_updates', 1); // Default to enabled
 
-    if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
+    if (!wp_next_scheduledProposed changes('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
     }
 
@@ -356,7 +357,8 @@ register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
 
 // Plugin update checker
 function teckglobal_bfp_check_for_updates($transient) {
-    if (empty($transient->checked)) {
+    if (empty($transient->checked) || !get_option('teckglobal_bfp_enable_updates', 1)) {
+        teckglobal_bfp_debug("Update check skipped: Either no checked transient or updates disabled");
         return $transient;
     }
 

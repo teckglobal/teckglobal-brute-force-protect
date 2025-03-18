@@ -35,7 +35,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 * GeoIP Integration: Automatically downloads MaxMind GeoLite2 City database (with a free license key).
 * IP Management: Manually ban/unban IPs and exclude trusted IPs/subnets.
 * Logs & Map: View detailed logs and a Leaflet-powered map of banned IP locations.
-* Auto-Updates: Seamless updates via GitHub releases.
+* Auto-Updates: Seamless updates via GitHub releases (configurable).
 
 == Requirements ==
 
@@ -50,6 +50,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 * Auto-Ban Invalid Usernames: Enable to ban IPs using non-existent usernames.
 * Excluded IPs: Add IPs or subnets (e.g., `192.168.1.1`, `10.0.0.0/24`) to whitelist.
 * MaxMind Key: Enter your key for automatic GeoIP updates (Tuesdays/Fridays).
+* Auto-Updates: Enable/disable update checks from GitHub.
 
 == Screenshots ==
 
@@ -68,7 +69,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 * Initial release with IP tracking, banning, geolocation, and exclusion features.
 * Added MaxMind API key integration with automatic database updates.
 * Implemented admin interface with settings, logs, and interactive map.
-* Enabled auto-updates via GitHub releases.
+* Enabled configurable auto-updates via GitHub releases.
 
 == Upgrade Notice ==
 

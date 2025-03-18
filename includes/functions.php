@@ -338,6 +338,7 @@ function teckglobal_bfp_settings_page(): void {
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['teckglobal_bfp_exploit_protection']) ? 1 : 0);
         update_option('teckglobal_bfp_exploit_max_attempts', intval($_POST['teckglobal_bfp_exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['teckglobal_bfp_maxmind_key']));
+        update_option('teckglobal_bfp_enable_updates', isset($_POST['teckglobal_bfp_enable_updates']) ? 1 : 0);
         teckglobal_bfp_download_geoip();
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
@@ -384,6 +385,12 @@ function teckglobal_bfp_settings_page(): void {
             <p>
                 <label for="teckglobal_bfp_exploit_max_attempts">Max Exploit Scan Attempts Before Ban:</label><br />
                 <input type="number" name="teckglobal_bfp_exploit_max_attempts" value="<?php echo esc_attr(get_option('teckglobal_bfp_exploit_max_attempts', 3)); ?>" min="1" />
+            </p>
+            <h3>Plugin Updates</h3>
+            <p>
+                <input type="checkbox" name="teckglobal_bfp_enable_updates" value="1" <?php checked(1, get_option('teckglobal_bfp_enable_updates', 1)); ?> />
+                Enable automatic update checks from GitHub
+                <br /><small>Checks for updates on the <a href="https://github.com/teckglobal/teckglobal-brute-force-protect/releases" target="_blank">GitHub repository</a>.</small>
             </p>
             <p><input type="submit" name="teckglobal_bfp_settings" class="button-primary" value="Save Settings" /></p>
         </form>
