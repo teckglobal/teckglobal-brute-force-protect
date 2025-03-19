@@ -6,7 +6,7 @@
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
 - **Tested Up To**: 6.7
-- **Stable Tag**: 1.0.0
+- **Stable Tag**: 1.0.1
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
 - **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -55,11 +55,11 @@ If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me
 ## Screenshots
 
 1. **Settings Page**: Configure max attempts, ban duration, and exclusions.
-   ![Settings Page](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot1.webp)
+   ![Settings Page](https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp)
 2. **Manage IPs**: Ban or unban IPs manually.
-   ![Manage IPs](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot2.webp)
+   ![Manage IPs](https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp)
 3. **IP Logs & Map**: View logs and banned IP locations on a map.
-   ![IP Logs & Map](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot3.webp)
+   ![IP Logs & Map](https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp)
 
 ## Development
 
@@ -73,7 +73,11 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
-1.0.0 - 2025-03-18
+1.0.1 - 2025-03-18
+Added "Enable Debug Logging" option to Settings page for user-controlled debug logs.
+
+Bumped version to test auto-update functionality.
+1.0.0 - 2025-03-18
 Initial release with brute force protection, exploit detection, GeoIP, and IP management.
 
 Added admin interface with settings, logs, and Leaflet map.

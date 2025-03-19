@@ -4,7 +4,7 @@ Donate link: https://teck-global.com/buy-me-a-coffee/
 Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
@@ -59,7 +59,11 @@ Configure max attempts, ban duration, and excluded IPs in the Settings page.
 View logs of banned IPs with an interactive map in IP Logs & Map.
 [screenshot-3]: https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp
 == Changelog ==
-= 1.0.0 - 2025-03-18 =
+= 1.0.1 - 2025-03-18 =
+Added "Enable Debug Logging" option to Settings page for user-controlled debug logs.
+
+Bumped version to test auto-update functionality.
+= 1.0.0 - 2025-03-18 =
 Initial release with IP tracking, banning, geolocation, and exclusion features.
 
 Added MaxMind API key integration with automatic database updates.
@@ -68,6 +72,8 @@ Implemented admin interface with settings, logs, and interactive map.
 
 Enabled auto-updates via GitHub releases.
 == Upgrade Notice ==
+= 1.0.1 =
+Adds a debug logging toggle to Settings—update to test auto-updates and gain more control over logs!
 = 1.0.0 =
 Initial release—install to protect your WordPress site from brute force attacks and exploit scans!
 

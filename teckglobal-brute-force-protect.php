@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.0
+ * Version: 1.0.1
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,14 +22,14 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.4');
+define('TECKGLOBAL_BFP_VERSION', '1.0.1');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
 require_once TECKGLOBAL_BFP_PATH . 'includes/functions.php';
 
 function teckglobal_bfp_debug(string $message): void {
-    if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+    if (get_option('teckglobal_bfp_enable_logging', 0)) {
         $log_file = WP_CONTENT_DIR . '/teckglobal-bfp-debug.log';
         $timestamp = current_time('Y-m-d H:i:s');
         file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
@@ -238,23 +238,18 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
 
     wp_enqueue_script('jquery');
 
-    // Corrected hook check for IP Logs & Map page
     if (strpos($hook, 'brute-force-protect_page_teckglobal-bfp-ip-logs') !== false) {
         teckglobal_bfp_debug("Loading Leaflet assets for IP Logs & Map page: $hook");
 
-        // Enqueue Leaflet CSS (CDN)
         wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
         teckglobal_bfp_debug("Leaflet CSS enqueued from CDN: https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
 
-        // Enqueue Leaflet JS (CDN)
         wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', ['jquery'], '1.9.4', true);
         teckglobal_bfp_debug("Leaflet JS enqueued from CDN: https://unpkg.com/leaflet@1.9.4/dist/leaflet.js");
 
-        // Verify Leaflet load in console
         wp_add_inline_script('leaflet-js', 'console.log("Leaflet JS loaded at: " + new Date().toISOString() + "; L defined: " + (typeof L !== "undefined"));');
         teckglobal_bfp_debug("Added inline script to verify Leaflet load");
 
-        // Enqueue plugin script with Leaflet dependency
         wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery', 'leaflet-js'], TECKGLOBAL_BFP_VERSION, true);
         teckglobal_bfp_debug("Plugin script enqueued with dependencies: jquery, leaflet-js");
     } else {
@@ -272,7 +267,7 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
         'auto_update_status' => $is_enabled ? 'enabled' : 'disabled',
         'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
     ];
-    wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', $localize_data);
+    wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', $localize_data);
     teckglobal_bfp_debug("Localized teckglobal_bfp_ajax for hook $hook: " . json_encode($localize_data));
 }
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
@@ -333,6 +328,7 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
     add_option('teckglobal_bfp_maxmind_key', '');
     add_option('teckglobal_bfp_remove_data', 0);
+    add_option('teckglobal_bfp_enable_logging', 0); // New option
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -374,7 +370,8 @@ function teckglobal_bfp_deactivate() {
             'teckglobal_bfp_exploit_protection',
             'teckglobal_bfp_exploit_max_attempts',
             'teckglobal_bfp_maxmind_key',
-            'teckglobal_bfp_remove_data'
+            'teckglobal_bfp_remove_data',
+            'teckglobal_bfp_enable_logging' // Added to cleanup
         ];
         foreach ($options as $option) {
             delete_option($option);
@@ -398,6 +395,7 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
         update_option('teckglobal_bfp_remove_data', isset($_POST['remove_data']) ? 1 : 0);
+        update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0); // New option
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
@@ -438,6 +436,10 @@ function teckglobal_bfp_settings_page() {
                 <tr>
                     <th>Remove Data on Deactivation</th>
                     <td><input type="checkbox" name="remove_data" <?php checked(get_option('teckglobal_bfp_remove_data', 0), 1); ?> /> <small>(Drops table and options)</small></td>
+                </tr>
+                <tr>
+                    <th>Enable Debug Logging</th>
+                    <td><input type="checkbox" name="enable_logging" <?php checked(get_option('teckglobal_bfp_enable_logging', 0), 1); ?> /> <small>(Logs to wp-content/teckglobal-bfp-debug.log)</small></td>
                 </tr>
             </table>
             <p class="submit">
