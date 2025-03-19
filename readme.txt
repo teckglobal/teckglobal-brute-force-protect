@@ -4,7 +4,7 @@ Donate link: https://teck-global.com/buy-me-a-coffee/
 Tags: security, brute force, login protection, ip blocking, geolocation
 Requires at least: 5.0
 Tested up to: 6.7.2
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
@@ -15,7 +15,7 @@ Protect your WordPress site from brute force login attacks and exploit scans wit
 
 TeckGlobal Brute Force Protect is a powerful security plugin by TeckGlobal LLC, enhanced by xAI's Grok, designed to shield your WordPress site from brute force login attempts and malicious exploit scans. It tracks failed login attempts, bans offending IPs, and provides detailed logs with geolocation data. With customizable settings and advanced features, it’s an essential tool for site administrators seeking robust protection.
 
-Key features include a dashboard widget for monitoring, a customizable block message, visual feedback on the login form, toggleable debug logs, and an IP whitelist to bypass checks. If you value this free plugin, please consider a donation at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
+Key features include a dashboard widget, customizable block messages, visual login feedback, toggleable debug logs, IP whitelist, real-time notifications, CAPTCHA integration, rate limiting, threat intelligence, user agent logging, and settings export/import. Support this free plugin at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
 
 == Installation ==
 
@@ -29,8 +29,8 @@ Key features include a dashboard widget for monitoring, a customizable block mes
 
 3. **Configure Settings**:
    - Go to `TeckGlobal BFP > Settings` in the admin menu.
-   - Set max login attempts, ban duration, block message, and other options.
-   - (Optional) Add a MaxMind License Key for geolocation.
+   - Set max login attempts, ban duration, block message, CAPTCHA, notifications, and other options.
+   - (Optional) Add a MaxMind License Key, reCAPTCHA keys, or AbuseIPDB API key.
 
 4. **Monitor**:
    - Check the dashboard widget for stats.
@@ -51,10 +51,13 @@ Banned IPs trigger a shake animation and red border on login attempts.
 Check "Enable Debug Logging" or "Enable Detailed Debug Log" in settings for logs in `wp-content/`.
 
 = How do I whitelist IPs? =
-Add IPs (one per line) in the "IP Whitelist" field under settings to skip brute force checks.
+Add IPs (one per line) in the "IP Whitelist" field under settings to skip checks.
 
 = Is a MaxMind key required? =
 No, it’s optional for geolocation; without it, country data shows as "Unknown."
+
+= How do I enable CAPTCHA? =
+Enable it in settings and add reCAPTCHA site and secret keys.
 
 == Screenshots ==
 
@@ -65,6 +68,14 @@ No, it’s optional for geolocation; without it, country data shows as "Unknown.
 5. **Login Form Feedback**: Visual cue for banned IP attempts.
 
 == Changelog ==
+
+= 1.1.0 =
+* Added real-time email notifications for ban events.
+* Integrated reCAPTCHA for login form protection.
+* Implemented rate limiting for login attempts.
+* Added AbuseIPDB threat intelligence integration.
+* Included user agent logging in IP logs.
+* Enabled settings export/import functionality.
 
 = 1.0.3 =
 * Added Login Attempt Counter Dashboard Widget.
@@ -87,8 +98,11 @@ No, it’s optional for geolocation; without it, country data shows as "Unknown.
 
 == Upgrade Notice ==
 
+= 1.1.0 =
+Upgrade for enhanced security with notifications, CAPTCHA, rate limiting, threat intelligence, and more.
+
 = 1.0.3 =
-Upgrade for new monitoring tools (dashboard widget), user experience improvements (block message, login feedback), and advanced options (debug log, whitelist).
+Upgrade for new monitoring tools, user experience improvements, and advanced options.
 
 == Additional Information ==
 

@@ -86,22 +86,23 @@ jQuery(document).ready(function($) {
     }, 2000);
 
     // Map initialization for IP Logs & Map page
-    if ($('#map').length) {
+    if ($('#bfp-map').length) { // Adjusted to match functions.php ID
         console.log('Map container found, initializing at: ' + new Date().toISOString());
 
         if (typeof L === 'undefined') {
-            console.error('Leaflet (L) is not defined. Check if leaflet.js is loading correctly.');
+            console.error('Leaflet (L) is not defined. Ensure leaflet.js is enqueued.');
             return;
         }
 
-        var map = L.map('map').setView([0, 0], 1);
-        console.log('Map initialized with default view [0, 0] at zoom 1');
+        var map = L.map('bfp-map').setView([0, 0], 2);
+        console.log('Map initialized with default view [0, 0] at zoom 2');
 
         var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 18
         }).addTo(map);
 
-        var locationsData = typeof locations !== 'undefined' ? locations : [];
+        var locationsData = window.teckglobal_bfp_locations || []; // Expecting localized data
         console.log('Locations data received: ' + JSON.stringify(locationsData));
 
         if (locationsData.length > 0) {
@@ -111,7 +112,11 @@ jQuery(document).ready(function($) {
             locationsData.forEach(function(location) {
                 if (location.lat && location.lng && !isNaN(location.lat) && !isNaN(location.lng)) {
                     var marker = L.marker([location.lat, location.lng]).addTo(markers);
-                    marker.bindPopup('IP: ' + location.ip + '<br>Country: ' + location.country);
+                    marker.bindPopup(
+                        '<b>IP:</b> ' + location.ip + 
+                        '<br><b>Country:</b> ' + location.country + 
+                        '<br><b>User Agent:</b> ' + location.user_agent
+                    );
                     bounds.push([location.lat, location.lng]);
                     console.log('Marker added for IP: ' + location.ip + ' at [' + location.lat + ', ' + location.lng + ']');
                 } else {
@@ -150,7 +155,7 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        $button.replaceWith('Ban Expired');
+                        $button.replaceWith('<span>Unbanned</span>');
                         console.log('IP ' + ip + ' unbanned successfully via AJAX');
                     } else {
                         console.error('Unban failed: ' + response.data.message);
@@ -163,23 +168,57 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Visual feedback on login form
+    // Visual feedback on login form and CAPTCHA/Attempts notice
     if ($('#loginform').length) {
         console.log('Login form detected, setting up visual feedback at: ' + new Date().toISOString());
 
+        // CAPTCHA integration
+        if (teckglobal_bfp_ajax.captcha_enabled) {
+            $.getScript('https://www.google.com/recaptcha/api.js', function() {
+                $('#loginform p.submit').before(
+                    '<div class="g-recaptcha" data-sitekey="' + teckglobal_bfp_ajax.captcha_site_key + '"></div>'
+                );
+                console.log('reCAPTCHA loaded and added to login form');
+            });
+        }
+
+        // Attempts left notice
+        if (!teckglobal_bfp_ajax.is_banned && teckglobal_bfp_ajax.attempts_left < 5) {
+            $('#loginform').prepend(
+                '<p class="bfp-attempts-notice">Warning: ' + teckglobal_bfp_ajax.attempts_left + 
+                ' login attempts remaining before ban.</p>'
+            );
+            console.log('Added attempts notice: ' + teckglobal_bfp_ajax.attempts_left + ' attempts left');
+        }
+
         $('#loginform').on('submit', function(e) {
             var $form = $(this);
-            var ip = '<?php echo esc_js(teckglobal_bfp_get_client_ip()); ?>'; // Server-side IP check
-            var isBanned = <?php echo teckglobal_bfp_is_ip_banned(teckglobal_bfp_get_client_ip()) ? 'true' : 'false'; ?>;
+            var isBanned = teckglobal_bfp_ajax.is_banned;
 
             if (isBanned) {
                 e.preventDefault();
                 $form.addClass('tgbp-blocked');
-                console.log('IP ' + ip + ' is banned; login form blocked with visual feedback.');
+                console.log('IP is banned; login form blocked with visual feedback.');
                 setTimeout(function() {
                     $form.removeClass('tgbp-blocked');
-                }, 1000); // Remove class after animation
+                }, 1000);
             }
         });
     }
+
+    // Add excluded IP row (for settings page)
+    $('#add-excluded-ip').on('click', function() {
+        $('#excluded-ips-rows').append(
+            '<tr><td><input type="text" name="excluded_ip[]" value="" /></td>' +
+            '<td><input type="text" name="excluded_note[]" value="" /></td>' +
+            '<td><button type="button" class="button remove-row">Remove</button></td></tr>'
+        );
+        console.log('Added new excluded IP row');
+    });
+
+    // Remove excluded IP row
+    $(document).on('click', '.remove-row', function() {
+        $(this).closest('tr').remove();
+        console.log('Removed excluded IP row');
+    });
 });

@@ -1,4 +1,4 @@
-/* assets/css/style.css */
+/* TeckGlobal Brute Force Protect Styles */
 
 /* Ensure compatibility with WordPress admin styles */
 .teckglobal-log-table {
@@ -72,6 +72,19 @@
     100% { transform: translateX(0); }
 }
 
+/* CAPTCHA styling */
+.g-recaptcha {
+    margin: 10px 0;
+    display: inline-block;
+}
+
+/* Attempts notice */
+.bfp-attempts-notice {
+    color: #d54e21;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 782px) {
     .teckglobal-log-table,
@@ -126,20 +139,20 @@
 }
 
 .leaflet-control-layers-base input[type="radio"] {
-    display: none; /* Hide default radio buttons */
+    display: none;
 }
 
-/* Aerial layer icon (placeholder until custom icon added) */
+/* Aerial layer icon (placeholder) */
 .leaflet-control-layers-base label:nth-child(1)::before {
-    content: url('images/layers.png');
+    content: url('../images/layers.png');
     width: 16px;
     height: 16px;
     margin-right: 5px;
 }
 
-/* Terrain layer icon (placeholder until custom terrain icon added) */
+/* Terrain layer icon (placeholder) */
 .leaflet-control-layers-base label:nth-child(2)::before {
-    content: url('images/layers-2x.png');
+    content: url('../images/layers-2x.png');
     width: 16px;
     height: 16px;
     margin-right: 5px;

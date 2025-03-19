@@ -1,11 +1,11 @@
-<<?php
+<?php
 /*
  * Plugin Name: TeckGlobal Brute Force Protect
  * Author: TeckGlobal LLC, xAI-Grok
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.3
+ * Version: 1.1.0
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.3');
+define('TECKGLOBAL_BFP_VERSION', '1.1.0');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -67,17 +67,32 @@ function teckglobal_bfp_get_client_ip(): string {
 
 function teckglobal_bfp_login_failed($username) {
     $ip = teckglobal_bfp_get_client_ip();
+    if (teckglobal_bfp_check_threat_feed($ip)) {
+        teckglobal_bfp_ban_ip($ip, 'threat_feed');
+        return;
+    }
     teckglobal_bfp_log_attempt($ip);
 
     $max_attempts = (int) get_option('teckglobal_bfp_max_attempts', 5);
     $attempts = teckglobal_bfp_get_attempts($ip);
 
+    if (!teckglobal_bfp_check_rate_limit($ip)) {
+        teckglobal_bfp_debug("IP $ip rate-limited.");
+        return;
+    }
+
     if ($attempts >= $max_attempts) {
         teckglobal_bfp_ban_ip($ip, 'brute_force');
         teckglobal_bfp_debug("IP $ip banned for exceeding $max_attempts login attempts.");
+        if (get_option('teckglobal_bfp_enable_notifications', 0)) {
+            wp_mail(
+                get_option('teckglobal_bfp_notification_email', get_option('admin_email')),
+                'Brute Force Ban Notification',
+                "IP $ip was banned after $attempts failed login attempts."
+            );
+        }
     }
 }
-
 add_action('wp_login_failed', 'teckglobal_bfp_login_failed');
 
 function teckglobal_bfp_login_success($username) {
@@ -91,7 +106,6 @@ function teckglobal_bfp_login_success($username) {
         $wpdb->update($table_name, ['attempts' => 0, 'banned' => 0, 'ban_expiry' => null, 'scan_exploit' => 0, 'brute_force' => 0, 'manual_ban' => 0], ['ip' => $ip]);
     }
 }
-
 add_action('wp_login', 'teckglobal_bfp_login_success');
 
 function teckglobal_bfp_check_invalid_username($username, $password) {
@@ -108,7 +122,6 @@ function teckglobal_bfp_check_invalid_username($username, $password) {
         teckglobal_bfp_debug("IP $ip auto-banned for invalid username: $username");
     }
 }
-
 add_action('wp_authenticate', 'teckglobal_bfp_check_invalid_username', 10, 2);
 
 function teckglobal_bfp_check_exploit_scans() {
@@ -139,7 +152,6 @@ function teckglobal_bfp_check_exploit_scans() {
         }
     }
 }
-
 add_action('init', 'teckglobal_bfp_check_exploit_scans', 2);
 
 function teckglobal_bfp_block_banned_ips_login($user, $username, $password) {
@@ -151,7 +163,6 @@ function teckglobal_bfp_block_banned_ips_login($user, $username, $password) {
     }
     return $user;
 }
-
 add_filter('authenticate', 'teckglobal_bfp_block_banned_ips_login', 5, 3);
 
 function teckglobal_bfp_block_banned_ips() {
@@ -162,7 +173,6 @@ function teckglobal_bfp_block_banned_ips() {
         wp_die($block_message, 'Access Denied', ['response' => 403]);
     }
 }
-
 add_action('init', 'teckglobal_bfp_block_banned_ips', 1);
 
 function teckglobal_bfp_admin_menu() {
@@ -171,11 +181,10 @@ function teckglobal_bfp_admin_menu() {
     add_submenu_page('teckglobal-bfp', 'Manage IPs', 'Manage IPs', 'manage_options', 'teckglobal-bfp-manage-ips', 'teckglobal_bfp_manage_ips_page');
     add_submenu_page('teckglobal-bfp', 'IP Logs & Map', 'IP Logs & Map', 'manage_options', 'teckglobal-bfp-ip-logs', 'teckglobal_bfp_ip_logs_page');
 }
-
 add_action('admin_menu', 'teckglobal_bfp_admin_menu');
 
 function teckglobal_bfp_enqueue_admin_assets($hook) {
-    if (strpos($hook, 'teckglobal-bfp') === false && $hook !== 'plugins.php') {
+    if (strpos($hook, 'teckglobal-bfp') === false && $hook !== 'plugins.php' && $hook !== 'index.php') {
         return;
     }
 
@@ -193,7 +202,12 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
         'toggle_nonce' => wp_create_nonce('toggle-auto-update'),
         'plugin_slug' => 'teckglobal-brute-force-protect/teckglobal-brute-force-protect.php',
         'auto_update_status' => $is_enabled ? 'enabled' : 'disabled',
-        'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
+        'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/',
+        'captcha_enabled' => get_option('teckglobal_bfp_enable_captcha', 0),
+        'captcha_site_key' => get_option('teckglobal_bfp_recaptcha_site_key', ''),
+        'ip' => teckglobal_bfp_get_client_ip(),
+        'is_banned' => teckglobal_bfp_is_ip_banned(teckglobal_bfp_get_client_ip()),
+        'attempts_left' => teckglobal_bfp_get_attempts_left(teckglobal_bfp_get_client_ip())
     ];
     wp_localize_script($script_handle, 'teckglobal_bfp_ajax', $localize_data);
 
@@ -211,19 +225,28 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
             }
         ";
         wp_add_inline_script('leaflet-js', $fallback_script);
-
-        wp_enqueue_script($script_handle, TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery', 'leaflet-js'], TECKGLOBAL_BFP_VERSION, true);
-        wp_localize_script($script_handle, 'teckglobal_bfp_ajax', $localize_data);
     }
 }
-
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
 
 function teckglobal_bfp_enqueue_login_assets() {
     wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], TECKGLOBAL_BFP_VERSION);
     wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery'], TECKGLOBAL_BFP_VERSION, true);
-}
 
+    $localize_data = [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'captcha_enabled' => get_option('teckglobal_bfp_enable_captcha', 0),
+        'captcha_site_key' => get_option('teckglobal_bfp_recaptcha_site_key', ''),
+        'ip' => teckglobal_bfp_get_client_ip(),
+        'is_banned' => teckglobal_bfp_is_ip_banned(teckglobal_bfp_get_client_ip()),
+        'attempts_left' => teckglobal_bfp_get_attempts_left(teckglobal_bfp_get_client_ip())
+    ];
+    wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', $localize_data);
+
+    if (get_option('teckglobal_bfp_enable_captcha', 0)) {
+        wp_enqueue_script('recaptcha', 'https://www.google.com/recaptcha/api.js', [], null, true);
+    }
+}
 add_action('login_enqueue_scripts', 'teckglobal_bfp_enqueue_login_assets');
 
 function teckglobal_bfp_ajax_unban_ip() {
@@ -240,7 +263,6 @@ function teckglobal_bfp_ajax_unban_ip() {
     teckglobal_bfp_unban_ip($ip);
     wp_send_json_success(['ip' => $ip]);
 }
-
 add_action('wp_ajax_teckglobal_bfp_unban_ip', 'teckglobal_bfp_ajax_unban_ip');
 
 function teckglobal_bfp_activate() {
@@ -261,6 +283,7 @@ function teckglobal_bfp_activate() {
         scan_exploit TINYINT(1) NOT NULL DEFAULT 0,
         brute_force TINYINT(1) NOT NULL DEFAULT 0,
         manual_ban TINYINT(1) NOT NULL DEFAULT 0,
+        user_agent VARCHAR(255) DEFAULT NULL,
         PRIMARY KEY (id),
         UNIQUE KEY ip (ip)
     ) $charset_collate;";
@@ -281,6 +304,16 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_block_message', 'Your IP has been banned due to suspicious activity. Please contact the site administrator.');
     add_option('teckglobal_bfp_enable_debug_log', 0);
     add_option('teckglobal_bfp_whitelist_ips', '');
+    add_option('teckglobal_bfp_enable_notifications', 0);
+    add_option('teckglobal_bfp_notification_email', get_option('admin_email'));
+    add_option('teckglobal_bfp_enable_captcha', 0);
+    add_option('teckglobal_bfp_recaptcha_site_key', '');
+    add_option('teckglobal_bfp_recaptcha_secret_key', '');
+    add_option('teckglobal_bfp_enable_rate_limit', 0);
+    add_option('teckglobal_bfp_rate_limit_attempts', 3);
+    add_option('teckglobal_bfp_rate_limit_interval', 60);
+    add_option('teckglobal_bfp_enable_threat_feed', 0);
+    add_option('teckglobal_bfp_abuseipdb_key', '');
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -291,13 +324,11 @@ function teckglobal_bfp_activate() {
         wp_schedule_event(strtotime('next Friday 01:00:00 UTC'), 'weekly', 'teckglobal_bfp_update_geoip');
     }
 }
-
 register_activation_hook(__FILE__, 'teckglobal_bfp_activate');
 
 function teckglobal_bfp_initial_geoip_download() {
     teckglobal_bfp_download_geoip();
 }
-
 add_action('teckglobal_bfp_initial_geoip_download', 'teckglobal_bfp_initial_geoip_download');
 
 function teckglobal_bfp_deactivate() {
@@ -313,14 +344,17 @@ function teckglobal_bfp_deactivate() {
             'teckglobal_bfp_auto_ban_invalid', 'teckglobal_bfp_excluded_ips',
             'teckglobal_bfp_exploit_protection', 'teckglobal_bfp_exploit_max_attempts',
             'teckglobal_bfp_maxmind_key', 'teckglobal_bfp_remove_data', 'teckglobal_bfp_enable_logging',
-            'teckglobal_bfp_block_message', 'teckglobal_bfp_enable_debug_log', 'teckglobal_bfp_whitelist_ips'
+            'teckglobal_bfp_block_message', 'teckglobal_bfp_enable_debug_log', 'teckglobal_bfp_whitelist_ips',
+            'teckglobal_bfp_enable_notifications', 'teckglobal_bfp_notification_email', 'teckglobal_bfp_enable_captcha',
+            'teckglobal_bfp_recaptcha_site_key', 'teckglobal_bfp_recaptcha_secret_key', 'teckglobal_bfp_enable_rate_limit',
+            'teckglobal_bfp_rate_limit_attempts', 'teckglobal_bfp_rate_limit_interval', 'teckglobal_bfp_enable_threat_feed',
+            'teckglobal_bfp_abuseipdb_key'
         ];
         foreach ($options as $option) {
             delete_option($option);
         }
     }
 }
-
 register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
 
 function teckglobal_bfp_settings_page() {
@@ -353,15 +387,34 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_block_message', sanitize_text_field($_POST['block_message']));
         update_option('teckglobal_bfp_enable_debug_log', isset($_POST['enable_debug_log']) ? 1 : 0);
         update_option('teckglobal_bfp_whitelist_ips', sanitize_textarea_field($_POST['whitelist_ips']));
+        update_option('teckglobal_bfp_enable_notifications', isset($_POST['enable_notifications']) ? 1 : 0);
+        update_option('teckglobal_bfp_notification_email', sanitize_email($_POST['notification_email']));
+        update_option('teckglobal_bfp_enable_captcha', isset($_POST['enable_captcha']) ? 1 : 0);
+        update_option('teckglobal_bfp_recaptcha_site_key', sanitize_text_field($_POST['recaptcha_site_key']));
+        update_option('teckglobal_bfp_recaptcha_secret_key', sanitize_text_field($_POST['recaptcha_secret_key']));
+        update_option('teckglobal_bfp_enable_rate_limit', isset($_POST['enable_rate_limit']) ? 1 : 0);
+        update_option('teckglobal_bfp_rate_limit_attempts', absint($_POST['rate_limit_attempts']));
+        update_option('teckglobal_bfp_rate_limit_interval', absint($_POST['rate_limit_interval']));
+        update_option('teckglobal_bfp_enable_threat_feed', isset($_POST['enable_threat_feed']) ? 1 : 0);
+        update_option('teckglobal_bfp_abuseipdb_key', sanitize_text_field($_POST['abuseipdb_key']));
         echo '<div class="updated"><p>Settings saved.</p></div>';
+    }
+
+    if (isset($_POST['teckglobal_bfp_export_settings']) && check_admin_referer('teckglobal_bfp_export')) {
+        teckglobal_bfp_export_settings();
+    }
+
+    if (isset($_FILES['import_file']) && isset($_POST['teckglobal_bfp_import_settings']) && check_admin_referer('teckglobal_bfp_import')) {
+        teckglobal_bfp_import_settings();
     }
 
     $excluded_ips = get_option('teckglobal_bfp_excluded_ips', []);
     ?>
     <div class="wrap">
         <h1>TeckGlobal Brute Force Protect Settings</h1>
-        <form method="post" action="">
+        <form method="post" action="" enctype="multipart/form-data">
             <?php wp_nonce_field('teckglobal_bfp_settings'); ?>
+            <h2>General Settings</h2>
             <table class="form-table">
                 <tr>
                     <th>Max Login Attempts</th>
@@ -454,6 +507,63 @@ function teckglobal_bfp_settings_page() {
                     <td><textarea name="whitelist_ips" rows="5" cols="50"><?php echo esc_textarea(get_option('teckglobal_bfp_whitelist_ips', '')); ?></textarea><br><small>Enter one IP per line to bypass brute force checks.</small></td>
                 </tr>
             </table>
+
+            <h2>Advanced Features</h2>
+            <table class="form-table">
+                <tr>
+                    <th>Enable Notifications</th>
+                    <td><input type="checkbox" name="enable_notifications" <?php checked(get_option('teckglobal_bfp_enable_notifications', 0), 1); ?> /></td>
+                </tr>
+                <tr>
+                    <th>Notification Email</th>
+                    <td><input type="email" name="notification_email" value="<?php echo esc_attr(get_option('teckglobal_bfp_notification_email', get_option('admin_email'))); ?>" size="50" /></td>
+                </tr>
+                <tr>
+                    <th>Enable CAPTCHA</th>
+                    <td><input type="checkbox" name="enable_captcha" <?php checked(get_option('teckglobal_bfp_enable_captcha', 0), 1); ?> /></td>
+                </tr>
+                <tr>
+                    <th>reCAPTCHA Site Key</th>
+                    <td><input type="text" name="recaptcha_site_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_site_key', '')); ?>" size="50" /></td>
+                </tr>
+                <tr>
+                    <th>reCAPTCHA Secret Key</th>
+                    <td><input type="text" name="recaptcha_secret_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_secret_key', '')); ?>" size="50" /></td>
+                </tr>
+                <tr>
+                    <th>Enable Rate Limiting</th>
+                    <td><input type="checkbox" name="enable_rate_limit" <?php checked(get_option('teckglobal_bfp_enable_rate_limit', 0), 1); ?> /></td>
+                </tr>
+                <tr>
+                    <th>Rate Limit Attempts</th>
+                    <td><input type="number" name="rate_limit_attempts" value="<?php echo esc_attr(get_option('teckglobal_bfp_rate_limit_attempts', 3)); ?>" min="1" /></td>
+                </tr>
+                <tr>
+                    <th>Rate Limit Interval (seconds)</th>
+                    <td><input type="number" name="rate_limit_interval" value="<?php echo esc_attr(get_option('teckglobal_bfp_rate_limit_interval', 60)); ?>" min="1" /></td>
+                </tr>
+                <tr>
+                    <th>Enable Threat Feed</th>
+                    <td><input type="checkbox" name="enable_threat_feed" <?php checked(get_option('teckglobal_bfp_enable_threat_feed', 0), 1); ?> /></td>
+                </tr>
+                <tr>
+                    <th>AbuseIPDB API Key</th>
+                    <td><input type="text" name="abuseipdb_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_abuseipdb_key', '')); ?>" size="50" /></td>
+                </tr>
+            </table>
+
+            <h2>Export/Import Settings</h2>
+            <table class="form-table">
+                <tr>
+                    <th>Export Settings</th>
+                    <td><input type="submit" name="teckglobal_bfp_export_settings" class="button" value="Export" /> <?php wp_nonce_field('teckglobal_bfp_export'); ?></td>
+                </tr>
+                <tr>
+                    <th>Import Settings</th>
+                    <td><input type="file" name="import_file" accept=".json" /> <input type="submit" name="teckglobal_bfp_import_settings" class="button" value="Import" /> <?php wp_nonce_field('teckglobal_bfp_import'); ?></td>
+                </tr>
+            </table>
+
             <p class="submit">
                 <input type="submit" name="teckglobal_bfp_settings_save" class="button-primary" value="Save Changes" />
             </p>
@@ -505,7 +615,6 @@ function teckglobal_bfp_dashboard_widget_display() {
     <p><a href="<?php echo admin_url('admin.php?page=teckglobal-bfp'); ?>">View Settings</a></p>
     <?php
 }
-
 add_action('wp_dashboard_setup', 'teckglobal_bfp_dashboard_widget');
 
 function teckglobal_bfp_auto_update_toggle($enabled, $plugin) {
@@ -515,7 +624,6 @@ function teckglobal_bfp_auto_update_toggle($enabled, $plugin) {
     }
     return $enabled;
 }
-
 add_filter('auto_update_plugin', 'teckglobal_bfp_auto_update_toggle', 10, 2);
 
 function teckglobal_bfp_force_auto_update_ui($html, $plugin_file, $plugin_data) {
@@ -533,7 +641,6 @@ function teckglobal_bfp_force_auto_update_ui($html, $plugin_file, $plugin_data) 
     }
     return $html;
 }
-
 add_filter('plugin_auto_update_setting_html', 'teckglobal_bfp_force_auto_update_ui', 20, 3);
 
 function teckglobal_bfp_toggle_auto_update() {
@@ -562,7 +669,6 @@ function teckglobal_bfp_toggle_auto_update() {
         wp_send_json_success(['status' => $action === 'enable' ? 'enabled' : 'disabled', 'message' => 'No change needed']);
     }
 }
-
 add_action('wp_ajax_toggle_auto_update_plugin', 'teckglobal_bfp_toggle_auto_update');
 
 function teckglobal_bfp_fix_update_folder($upgrader, $data) {
@@ -593,7 +699,6 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
         teckglobal_bfp_debug("Temp dir not found or already correct: $temp_dir");
     }
 }
-
 add_action('upgrader_process_complete', 'teckglobal_bfp_fix_update_folder', 20, 2);
 
 function teckglobal_bfp_check_github_updates($transient) {
@@ -656,7 +761,6 @@ function teckglobal_bfp_check_github_updates($transient) {
 
     return $transient;
 }
-
 add_filter('pre_set_site_transient_update_plugins', 'teckglobal_bfp_check_github_updates', 10, 1);
 
 function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
@@ -679,17 +783,28 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'name' => 'TeckGlobal Brute Force Protect',
         'slug' => 'teckglobal-brute-force-protect',
         'version' => $version,
-        'author' => 'TeckGlobal LLC, xAI-Grok',
+        'author' => '<a href="https://teck-global.com/">TeckGlobal LLC</a>, <a href="https://x.ai/">xAI-Grok</a>',
         'download_link' => $release['zipball_url'],
         'trunk' => $release['zipball_url'],
         'requires' => '5.0',
         'tested' => '6.7.2',
         'requires_php' => '7.4',
         'last_updated' => $release['published_at'],
+        'homepage' => 'https://teck-global.com/wordpress-plugins/',
         'sections' => [
-            'description' => 'A WordPress plugin to prevent brute force login attacks and exploit scans.',
+            'description' => '<p>A WordPress plugin to prevent brute force login attacks and exploit scans, with features like IP management, geolocation, notifications, CAPTCHA, rate limiting, and threat feeds.</p><p>Support us at <a href="https://teck-global.com/buy-me-a-coffee/">Buy Me a Coffee</a>.</p>',
+            'installation' => '<ol><li>Upload via Plugins > Add New > Upload Plugin.</li><li>Activate.</li><li>Configure in TeckGlobal BFP > Settings.</li><li>Monitor via dashboard or IP Logs & Map.</li></ol>',
+            'changelog' => '<h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings.</li></ul><h4>1.0.3</h4><ul><li>Dashboard widget, block message, login feedback, debug logs, whitelist.</li></ul>',
         ],
+        'banners' => [
+            'low' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-772x250.jpg',
+            'high' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-1544x500.jpg'
+        ],
+        'icons' => [
+            '1x' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-icon-128x128.png',
+            '2x' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-icon-256x256.png'
+        ],
+        'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];
 }
-
 add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
