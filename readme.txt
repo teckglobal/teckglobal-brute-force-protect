@@ -67,6 +67,9 @@ View logs of banned IPs with an interactive map in IP Logs & Map.
 [screenshot-3]: https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp
 
 == Changelog ==
+= 1.0.5 - 2025-03-19 =
+Fixed Wordpress Updating folder rename errors.
+
 = 1.0.4 - 2025-03-19 =
 Fixed Wordpress Updating folder rename errors.
 

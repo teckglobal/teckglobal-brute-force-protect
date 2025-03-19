@@ -75,6 +75,9 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
+1.0.5 - 2025-03-19
+Fixed Wordpress Updating folder rename errors.
+
 1.0.4 - 2025-03-19
 Fixed Wordpress Updating folder rename errors.
 
