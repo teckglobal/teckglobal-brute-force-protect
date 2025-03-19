@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.0
+ * Version: 1.0.1
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.0');
+define('TECKGLOBAL_BFP_VERSION', '1.0.1');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -261,7 +261,7 @@ function teckglobal_bfp_activate() {
 
     update_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
     add_option('teckglobal_bfp_max_attempts', 5);
-    add_option('teckglobal_bfp_ban_time', 60);
+    add_option('teckglobal_bfp_ban_time', '60-minutes');
     add_option('teckglobal_bfp_auto_ban_invalid', 0);
     add_option('teckglobal_bfp_excluded_ips', '');
     add_option('teckglobal_bfp_exploit_protection', 0);
@@ -317,7 +317,7 @@ function teckglobal_bfp_settings_page() {
 
     if (isset($_POST['teckglobal_bfp_settings_save']) && check_admin_referer('teckglobal_bfp_settings')) {
         update_option('teckglobal_bfp_max_attempts', absint($_POST['max_attempts']));
-        update_option('teckglobal_bfp_ban_time', absint($_POST['ban_time']));
+        update_option('teckglobal_bfp_ban_time', sanitize_text_field($_POST['ban_time']));
         update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['auto_ban_invalid']) ? 1 : 0);
         update_option('teckglobal_bfp_excluded_ips', sanitize_textarea_field($_POST['excluded_ips']));
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['exploit_protection']) ? 1 : 0);
@@ -339,8 +339,27 @@ function teckglobal_bfp_settings_page() {
                     <td><input type="number" name="max_attempts" value="<?php echo esc_attr(get_option('teckglobal_bfp_max_attempts', 5)); ?>" min="1" /></td>
                 </tr>
                 <tr>
-                    <th>Ban Time (minutes)</th>
-                    <td><input type="number" name="ban_time" value="<?php echo esc_attr(get_option('teckglobal_bfp_ban_time', 60)); ?>" min="1" /></td>
+                    <th>Ban Duration</th>
+                    <td>
+                        <select name="ban_time">
+                            <?php
+                            $current_ban_time = get_option('teckglobal_bfp_ban_time', '60-minutes');
+                            $options = [
+                                '15-minutes' => '15 Minutes',
+                                '30-minutes' => '30 Minutes',
+                                '60-minutes' => '1 Hour',
+                                '180-minutes' => '3 Hours',
+                                '1440-minutes' => '1 Day',
+                                '4320-minutes' => '3 Days',
+                                '10080-minutes' => '1 Week',
+                            ];
+                            foreach ($options as $value => $label) {
+                                $selected = $current_ban_time === $value ? 'selected' : '';
+                                echo "<option value='$value' $selected>$label</option>";
+                            }
+                            ?>
+                        </select>
+                    </td>
                 </tr>
                 <tr>
                     <th>Auto-Ban Invalid Usernames</th>

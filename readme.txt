@@ -4,7 +4,7 @@ Donate link: https://teck-global.com/buy-me-a-coffee/
 Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
 Requires at least: 5.0
 Tested up to: 6.7.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
@@ -41,7 +41,7 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 
 == Configuration ==
 - Max Login Attempts: Default 5—adjust based on your security needs.
-- Ban Duration: Default 60 minutes—set how long IPs are banned.
+- Ban Duration: Default 1 hour—choose from 15 minutes to 1 week.
 - Auto-Ban Invalid Usernames: Enable to ban IPs using non-existent usernames.
 - Excluded IPs: Add IPs or subnets (e.g., 192.168.1.1, 10.0.0.0/24) to whitelist.
 - MaxMind Key: Enter your key for automatic GeoIP updates (Tuesdays/Fridays).
@@ -52,6 +52,9 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 3. View logs of banned IPs with an interactive map in IP Logs & Map. (screenshot-3.png)
 
 == Changelog ==
+= 1.0.1 - 2025-03-19 =
+- Added ban duration dropdown with options from 15 minutes to 1 week.
+
 = 1.0.0 - 2025-03-19 =
 - Initial release with IP tracking, banning, geolocation, and exclusion features.
 - Added MaxMind API key integration with automatic database updates.
@@ -59,5 +62,8 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 - Enabled auto-updates via GitHub releases.
 
 == Upgrade Notice ==
+= 1.0.1 =
+Updated with a ban duration dropdown—choose from 15 minutes to 1 week for more flexible IP banning!
+
 = 1.0.0 =
 Initial release—install to protect your WordPress site from brute force attacks and exploit scans!

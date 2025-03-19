@@ -6,7 +6,7 @@
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
 - **Tested Up To**: 6.7.2
-- **Stable Tag**: 1.0.0
+- **Stable Tag**: 1.0.1
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
 - **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -16,7 +16,7 @@ A lightweight WordPress plugin by TeckGlobal LLC to shield your site from brute 
 
 ## Description
 
-TeckGlobal Brute Force Protect is a free, open-source security plugin that locks down your WordPress site against brute force login attempts and exploit scans. It tracks failed logins, bans IPs after a configurable limit, and uses MaxMind’s GeoLite2 database to pinpoint attacker locations. The admin interface lets you manage IPs, review logs, and see banned IPs on a Leaflet-powered map.
+TeckGlobal Brute Force Protect is a free, open-source security plugin that locks down your WordPress site against brute force login attempts and exploit scans. It tracks failed logins, bans IPs after a configurable limit, and uses MaxMind’s GeoLite2 database to pinpoint attacker locations. The admin interface lets you manage IPs, review logs, and see banned IPs on a Leaflet-powered map (with local CSS/JS fallback).
 
 If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/). Huge thanks to xAI-Grok for co-development and debugging wizardry!
 
@@ -47,7 +47,7 @@ If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me
 ## Configuration
 
 - **Max Login Attempts**: Default 5—tweak as needed.
-- **Ban Duration**: Default 60 minutes—set ban length.
+- **Ban Duration**: Default 1 hour—choose from 15 minutes to 1 week.
 - **Auto-Ban Invalid Usernames**: Enable to ban IPs using fake usernames.
 - **Excluded IPs**: Whitelist IPs or subnets (e.g., `192.168.1.1`, `10.0.0.0/24`).
 - **MaxMind Key**: Add for weekly GeoIP updates (Tuesdays/Fridays).
@@ -73,19 +73,3 @@ If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me
 git clone https://github.com/teckglobal/teckglobal-brute-force-protect.git
 cd teckglobal-brute-force-protect
 composer install
-
-## Changelog
-### 1.0.0 - 2025-03-19
-- Initial release with brute force protection, exploit detection, GeoIP, and IP management.
-- Added admin interface with settings, logs, and Leaflet map.
-- Integrated MaxMind API key for auto GeoIP updates.
-- Enabled auto-updates via GitHub.
-
-## License
-Released under GPLv2 or later. Free to use, modify, and distribute.
-
-Credits
-TeckGlobal LLC: Core development and support.
-
-xAI-Grok: Co-development and debugging.
-Built with passion for the WordPress community. Stay safe out there!

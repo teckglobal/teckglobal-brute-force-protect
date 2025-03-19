@@ -100,8 +100,16 @@ function teckglobal_bfp_get_attempts(string $ip): int {
 function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
-    $ban_time = (int) get_option('teckglobal_bfp_ban_time', 60);
-    $ban_expiry = date('Y-m-d H:i:s', strtotime("+$ban_time minutes"));
+    $ban_time = get_option('teckglobal_bfp_ban_time', '60-minutes');
+    
+    // Parse value and unit
+    list($value, $unit) = explode('-', $ban_time);
+    $value = (int) $value;
+    $interval = match ($unit) {
+        'minutes' => "$value minutes",
+        default => "60 minutes", // Fallback
+    };
+    $ban_expiry = date('Y-m-d H:i:s', strtotime("+$interval"));
 
     if (teckglobal_bfp_is_ip_excluded($ip)) {
         return; // Skip banning and logging for excluded IPs
