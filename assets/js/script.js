@@ -113,8 +113,8 @@ jQuery(document).ready(function($) {
                 if (location.lat && location.lng && !isNaN(location.lat) && !isNaN(location.lng)) {
                     var marker = L.marker([location.lat, location.lng]).addTo(markers);
                     marker.bindPopup(
-                        '<b>IP:</b> ' + location.ip + 
-                        '<br><b>Country:</b> ' + location.country + 
+                        '<b>IP:</b> ' + location.ip +
+                        '<br><b>Country:</b> ' + location.country +
                         '<br><b>User Agent:</b> ' + location.user_agent
                     );
                     bounds.push([location.lat, location.lng]);
@@ -185,7 +185,7 @@ jQuery(document).ready(function($) {
         // Attempts left notice
         if (!teckglobal_bfp_ajax.is_banned && teckglobal_bfp_ajax.attempts_left < 5) {
             $('#loginform').prepend(
-                '<p class="bfp-attempts-notice">Warning: ' + teckglobal_bfp_ajax.attempts_left + 
+                '<p class="bfp-attempts-notice">Warning: ' + teckglobal_bfp_ajax.attempts_left +
                 ' login attempts remaining before ban.</p>'
             );
             console.log('Added attempts notice: ' + teckglobal_bfp_ajax.attempts_left + ' attempts left');

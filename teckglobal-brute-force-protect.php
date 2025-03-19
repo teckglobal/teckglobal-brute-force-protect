@@ -39,8 +39,8 @@ function teckglobal_bfp_debug(string $message): void {
 function teckglobal_bfp_get_client_ip(): string {
     $ip = '0.0.0.0';
     $headers = [
-        'HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED', 
-        'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 
+        'HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED',
+        'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',
         'REMOTE_ADDR'
     ];
 
@@ -134,7 +134,7 @@ function teckglobal_bfp_check_exploit_scans() {
 
     $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
     $suspicious_patterns = [
-        '/phpMyAdmin/i', '/adminer/i', '/wp-config\.php/i', 
+        '/phpMyAdmin/i', '/adminer/i', '/wp-config\.php/i',
         '/xmlrpc\.php/i', '/\.env/i', '/admin/i', '/db/i', '/test/i'
     ];
 
@@ -807,9 +807,4 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];
 }
-<<<<<<< HEAD
 add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
-=======
-
-add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
->>>>>>> 4c803db95d888e1611153c36d6112fae30d439df
