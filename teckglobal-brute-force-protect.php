@@ -531,3 +531,113 @@ function teckglobal_bfp_toggle_auto_update() {
     }
 }
 add_action('wp_ajax_toggle_auto_update_plugin', 'teckglobal_bfp_toggle_auto_update');
+
+function teckglobal_bfp_check_github_updates($transient) {
+    if (empty($transient->checked)) {
+        teckglobal_bfp_debug("No plugins checked yet; skipping GitHub update check");
+        return $transient;
+    }
+
+    $plugin_slug = 'teckglobal-brute-force-protect/teckglobal-brute-force-protect.php';
+    $repo = 'teckglobal/teckglobal-brute-force-protect';
+    $api_url = "https://api.github.com/repos/{$repo}/releases/latest";
+
+    teckglobal_bfp_debug("Checking GitHub for updates: $api_url");
+
+    $response = wp_remote_get($api_url, [
+        'headers' => ['User-Agent' => 'WordPress/TeckGlobal-BFP-' . TECKGLOBAL_BFP_VERSION],
+        'timeout' => 15,
+    ]);
+
+    if (is_wp_error($response)) {
+        teckglobal_bfp_debug("GitHub API failed: " . $response->get_error_message());
+        return $transient;
+    }
+
+    $status_code = wp_remote_retrieve_response_code($response);
+    if ($status_code !== 200) {
+        teckglobal_bfp_debug("GitHub API returned status $status_code: " . wp_remote_retrieve_body($response));
+        return $transient;
+    }
+
+    $release = json_decode(wp_remote_retrieve_body($response), true);
+    if (!$release || empty($release['tag_name'])) {
+        teckglobal_bfp_debug("Invalid GitHub release data: " . wp_remote_retrieve_body($response));
+        return $transient;
+    }
+
+    $version = ltrim($release['tag_name'], 'v');
+    $current_version = TECKGLOBAL_BFP_VERSION;
+
+    teckglobal_bfp_debug("GitHub version: $version, Current version: $current_version");
+
+    if (version_compare($version, $current_version, '>')) {
+        $zip_url = $release['zipball_url'];
+        $plugin_data = [
+            'id' => 'teckglobal-brute-force-protect',
+            'slug' => 'teckglobal-brute-force-protect',
+            'plugin' => $plugin_slug,
+            'new_version' => $version,
+            'url' => "https://github.com/{$repo}",
+            'package' => $zip_url,
+            'tested' => '6.7',
+            'requires' => '5.0',
+            'requires_php' => '7.4',
+        ];
+        $transient->response[$plugin_slug] = (object) $plugin_data;
+        teckglobal_bfp_debug("Update available: $version > $current_version, package: $zip_url");
+    } else {
+        teckglobal_bfp_debug("No update needed: $version <= $current_version");
+        $transient->no_update[$plugin_slug] = (object) [
+            'id' => 'teckglobal-brute-force-protect',
+            'slug' => 'teckglobal-brute-force-protect',
+            'plugin' => $plugin_slug,
+            'new_version' => $current_version,
+            'url' => "https://github.com/{$repo}",
+            'package' => null,
+        ];
+    }
+
+    return $transient;
+}
+add_filter('pre_set_site_transient_update_plugins', 'teckglobal_bfp_check_github_updates', 10, 1);
+
+function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
+    if ($action !== 'plugin_information' || empty($args->slug) || $args->slug !== 'teckglobal-brute-force-protect') {
+        return $result;
+    }
+
+    $repo = 'teckglobal/teckglobal-brute-force-protect';
+    $api_url = "https://api.github.com/repos/{$repo}/releases/latest";
+    $response = wp_remote_get($api_url, [
+        'headers' => ['User-Agent' => 'WordPress/TeckGlobal-BFP-' . TECKGLOBAL_BFP_VERSION],
+    ]);
+
+    if (is_wp_error($response)) {
+        teckglobal_bfp_debug("Plugin info API failed: " . $response->get_error_message());
+        return $result;
+    }
+
+    $release = json_decode(wp_remote_retrieve_body($response), true);
+    if (!$release || empty($release['tag_name'])) {
+        return $result;
+    }
+
+    $version = ltrim($release['tag_name'], 'v');
+    return (object) [
+        'name' => 'TeckGlobal Brute Force Protect',
+        'slug' => 'teckglobal-brute-force-protect',
+        'version' => $version,
+        'author' => 'TeckGlobal LLC, xAI-Grok',
+        'download_link' => $release['zipball_url'],
+        'trunk' => $release['zipball_url'],
+        'requires' => '5.0',
+        'tested' => '6.7',
+        'requires_php' => '7.4',
+        'last_updated' => $release['published_at'],
+        'sections' => [
+            'description' => 'A WordPress plugin to prevent brute force login attacks and exploit scans.',
+        ],
+    ];
+}
+add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
