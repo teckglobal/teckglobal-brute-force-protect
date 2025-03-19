@@ -5,12 +5,12 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.4
+ * Version: 1.0.5
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
  * Requires at least: 5.0
- * Tested up to: 6.7
+ * Tested up to: 6.7.2
  * Requires PHP: 7.4 or later
  * WordPress Available: yes
  * Requires License: no
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.4');
+define('TECKGLOBAL_BFP_VERSION', '1.0.5');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -442,10 +442,10 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
     }
 
     $plugin_dir = WP_PLUGIN_DIR . '/teckglobal-brute-force-protect';
-    $temp_dir = trailingslashit(dirname($upgrader->new_plugin_data['destination'] ?? '')) . 'teckglobal-teckglobal-brute-force-protect-' . substr(md5(time()), 0, 7);
+    $temp_dir = isset($upgrader->result['destination']) ? $upgrader->result['destination'] : '';
 
     teckglobal_bfp_debug("Update detected. Expected plugin dir: $plugin_dir");
-    teckglobal_bfp_debug("Checking temp dir: $temp_dir");
+    teckglobal_bfp_debug("Real temp dir from upgrader: $temp_dir");
 
     if ($temp_dir && file_exists($temp_dir) && $temp_dir !== $plugin_dir) {
         teckglobal_bfp_debug("Temp dir exists: $temp_dir");
@@ -458,14 +458,14 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
             activate_plugin('teckglobal-brute-force-protect/teckglobal-brute-force-protect.php');
             teckglobal_bfp_debug("Plugin reactivated successfully");
         } else {
-            teckglobal_bfp_debug("Failed to rename $temp_dir to $plugin_dir. Check permissions or path.");
+            teckglobal_bfp_debug("Failed to rename $temp_dir to $plugin_dir. Check permissions.");
         }
     } else {
         teckglobal_bfp_debug("Temp dir not found or already correct: $temp_dir");
     }
 }
 
-add_action('upgrader_process_complete', 'teckglobal_bfp_fix_update_folder', 20, 2); // Bumped priority
+add_action('upgrader_process_complete', 'teckglobal_bfp_fix_update_folder', 20, 2);
 
 function teckglobal_bfp_check_github_updates($transient) {
     if (empty($transient->checked)) {
@@ -481,12 +481,19 @@ function teckglobal_bfp_check_github_updates($transient) {
         'timeout' => 15,
     ]);
 
-    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+    if (is_wp_error($response)) {
+        teckglobal_bfp_debug("GitHub API error: " . $response->get_error_message());
+        return $transient;
+    }
+
+    if (wp_remote_retrieve_response_code($response) !== 200) {
+        teckglobal_bfp_debug("GitHub API returned non-200: " . wp_remote_retrieve_response_code($response));
         return $transient;
     }
 
     $release = json_decode(wp_remote_retrieve_body($response), true);
-    if (!$release || empty($release['tag_name'])) {
+    if (!is_array($release) || empty($release['tag_name'])) {
+        teckglobal_bfp_debug("GitHub API response invalid or missing tag_name");
         return $transient;
     }
 
@@ -505,6 +512,7 @@ function teckglobal_bfp_check_github_updates($transient) {
             'requires' => '5.0',
             'requires_php' => '7.4',
         ];
+        teckglobal_bfp_debug("Update available: v$version");
     } else {
         $transient->no_update[$plugin_slug] = (object) [
             'id' => 'teckglobal-brute-force-protect',
@@ -514,6 +522,7 @@ function teckglobal_bfp_check_github_updates($transient) {
             'url' => "https://github.com/{$repo}",
             'package' => null,
         ];
+        teckglobal_bfp_debug("No update needed: v$current_version");
     }
 
     return $transient;
