@@ -115,7 +115,7 @@
     display: none; /* Hide default radio buttons */
 }
 
-/* Aerial layer icon (using layers.png as a fallback) */
+/* Aerial layer icon (placeholder until custom icon added) */
 .leaflet-control-layers-base label:nth-child(1)::before {
     content: url('images/layers.png');
     width: 16px;
@@ -123,9 +123,9 @@
     margin-right: 5px;
 }
 
-/* Terrain layer icon (using layers.png as a temporary fallback) */
+/* Terrain layer icon (placeholder until custom terrain icon added) */
 .leaflet-control-layers-base label:nth-child(2)::before {
-    content: url('images/layers-2x.png'); /* Replace with terrain-icon.png once added */
+    content: url('images/layers-2x.png');
     width: 16px;
     height: 16px;
     margin-right: 5px;

@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.6
+ * Version: 1.0.0
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.6');
+define('TECKGLOBAL_BFP_VERSION', '1.0.0');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -508,7 +508,7 @@ function teckglobal_bfp_check_github_updates($transient) {
             'new_version' => $version,
             'url' => "https://github.com/{$repo}",
             'package' => $release['zipball_url'],
-            'tested' => '6.7',
+            'tested' => '6.7.2',
             'requires' => '5.0',
             'requires_php' => '7.4',
         ];
@@ -554,7 +554,7 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'download_link' => $release['zipball_url'],
         'trunk' => $release['zipball_url'],
         'requires' => '5.0',
-        'tested' => '6.7',
+        'tested' => '6.7.2',
         'requires_php' => '7.4',
         'last_updated' => $release['published_at'],
         'sections' => [

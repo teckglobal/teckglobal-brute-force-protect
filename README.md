@@ -6,7 +6,7 @@
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
 - **Tested Up To**: 6.7.2
-- **Stable Tag**: 1.0.6
+- **Stable Tag**: 1.0.0
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
 - **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -74,37 +74,16 @@ git clone https://github.com/teckglobal/teckglobal-brute-force-protect.git
 cd teckglobal-brute-force-protect
 composer install
 
-Changelog
-1.0.6 - 2025-03-19
-Fixed Wordpress Updating folder rename errors.
+## Changelog
+### 1.0.0 - 2025-03-19
+- Initial release with brute force protection, exploit detection, GeoIP, and IP management.
+- Added admin interface with settings, logs, and Leaflet map.
+- Integrated MaxMind API key for auto GeoIP updates.
+- Enabled auto-updates via GitHub.
 
-1.0.5 - 2025-03-19
-Fixed Wordpress Updating folder rename errors.
-
-1.0.4 - 2025-03-19
-Fixed Wordpress Updating folder rename errors.
-
-1.0.3 - 2025-03-19
-Fixed debug logs to make less chatty
-
-1.0.2 - 2025-03-19
-Fixed excessive debug logging by limiting to admin, cron, and AJAX contexts.
-Fixed auto-update toggle by ensuring proper script localization.
-
-1.0.1 - 2025-03-18
-Added "Enable Debug Logging" option to Settings page for user-controlled debug logs.
-
-Bumped version to test auto-update functionality.
-1.0.0 - 2025-03-18
-Initial release with brute force protection, exploit detection, GeoIP, and IP management.
-
-Added admin interface with settings, logs, and Leaflet map.
-
-Integrated MaxMind API key for auto GeoIP updates.
-
-Enabled auto-updates via GitHub.
-License
+## License
 Released under GPLv2 or later. Free to use, modify, and distribute.
+
 Credits
 TeckGlobal LLC: Core development and support.
 
