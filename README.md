@@ -6,7 +6,7 @@
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
 - **Tested Up To**: 6.7
-- **Stable Tag**: 1.0.1
+- **Stable Tag**: 1.0.3
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
 - **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -73,6 +73,9 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
+1.0.3 - 2025-03-19
+Fixed debug logs to make less chatty
+
 1.0.2 - 2025-03-19
 Fixed excessive debug logging by limiting to admin, cron, and AJAX contexts.
 Fixed auto-update toggle by ensuring proper script localization.
@@ -81,7 +84,7 @@ Fixed auto-update toggle by ensuring proper script localization.
 Added "Enable Debug Logging" option to Settings page for user-controlled debug logs.
 
 Bumped version to test auto-update functionality.
-1.0.0 - 2025-03-18
+1.0.0 - 2025-03-18
 Initial release with brute force protection, exploit detection, GeoIP, and IP management.
 
 Added admin interface with settings, logs, and Leaflet map.
@@ -89,10 +92,10 @@ Added admin interface with settings, logs, and Leaflet map.
 Integrated MaxMind API key for auto GeoIP updates.
 
 Enabled auto-updates via GitHub.
-License
+License
 Released under GPLv2 or later. Free to use, modify, and distribute.
 Credits
 TeckGlobal LLC: Core development and support.
 
 xAI-Grok: Co-development and debugging.
-Built with passion for the WordPress community. Stay safe out there!
+Built with passion for the WordPress community. Stay safe out there!

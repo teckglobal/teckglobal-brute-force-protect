@@ -23,8 +23,7 @@ function teckglobal_bfp_log_attempt(string $ip): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
 
     if (teckglobal_bfp_is_ip_excluded($ip)) {
-        teckglobal_bfp_debug("IP $ip is excluded; not logging attempt");
-        return;
+        return; // Skip logging entirely for excluded IPs
     }
 
     $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
@@ -39,12 +38,9 @@ function teckglobal_bfp_log_attempt(string $ip): void {
             $country = $record->country->name ?? 'Unknown';
             $latitude = $record->location->latitude ?? null;
             $longitude = $record->location->longitude ?? null;
-            teckglobal_bfp_debug("GeoIP data retrieved for IP $ip: Country=$country, Lat=$latitude, Lon=$longitude");
         } catch (Exception $e) {
             teckglobal_bfp_debug("GeoIP lookup failed for IP $ip: " . $e->getMessage());
         }
-    } else {
-        teckglobal_bfp_debug("GeoIP file not found at $geo_path");
     }
 
     $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE ip = %s", $ip));
@@ -108,8 +104,7 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     $ban_expiry = date('Y-m-d H:i:s', strtotime("+$ban_time minutes"));
 
     if (teckglobal_bfp_is_ip_excluded($ip)) {
-        teckglobal_bfp_debug("IP $ip is excluded; not banning");
-        return;
+        return; // Skip banning and logging for excluded IPs
     }
 
     $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
@@ -124,7 +119,6 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
             $country = $record->country->name ?? 'Unknown';
             $latitude = $record->location->latitude ?? null;
             $longitude = $record->location->longitude ?? null;
-            teckglobal_bfp_debug("GeoIP data retrieved for banned IP $ip: Country=$country, Lat=$latitude, Lon=$longitude");
         } catch (Exception $e) {
             teckglobal_bfp_debug("GeoIP lookup failed for banned IP $ip: " . $e->getMessage());
         }
@@ -206,8 +200,7 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
             teckglobal_bfp_debug("IP $ip ban expired, unbanned with preserved flags.");
             return false;
         }
-        teckglobal_bfp_debug("IP $ip is currently banned.");
-        return true;
+        return true; // No debug here unless needed
     }
     return false;
 }
@@ -219,8 +212,17 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
  * @return bool True if excluded, false otherwise
  */
 function teckglobal_bfp_is_ip_excluded(string $ip): bool {
+    static $last_excluded_ip = null;
+    static $last_result = null;
+
+    if ($ip === $last_excluded_ip) {
+        return $last_result; // Skip repeat checks
+    }
+
     $excluded_ips = get_option('teckglobal_bfp_excluded_ips', '');
     if (empty($excluded_ips)) {
+        $last_excluded_ip = $ip;
+        $last_result = false;
         return false;
     }
 
@@ -229,14 +231,18 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
         if (strpos($excluded, '/')) {
             list($subnet, $mask) = explode('/', $excluded);
             if (ip2long($ip) & ~((1 << (32 - $mask)) - 1) == ip2long($subnet)) {
-                teckglobal_bfp_debug("IP $ip matches excluded subnet $excluded");
+                $last_excluded_ip = $ip;
+                $last_result = true;
                 return true;
             }
         } elseif ($ip === $excluded) {
-            teckglobal_bfp_debug("IP $ip matches excluded IP $excluded");
+            $last_excluded_ip = $ip;
+            $last_result = true;
             return true;
         }
     }
+    $last_excluded_ip = $ip;
+    $last_result = false;
     return false;
 }
 
@@ -297,11 +303,9 @@ function teckglobal_bfp_download_geoip(): void {
             teckglobal_bfp_debug("Failed to create directory $geo_dir - Check permissions");
             return;
         }
-        teckglobal_bfp_debug("Created directory $geo_dir");
     }
 
     $download_url = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=$api_key&suffix=tar.gz";
-    teckglobal_bfp_debug("Attempting GeoIP download from $download_url");
     $response = wp_remote_get($download_url, ['timeout' => 30]);
 
     if (is_wp_error($response)) {
@@ -321,13 +325,10 @@ function teckglobal_bfp_download_geoip(): void {
         teckglobal_bfp_debug("Failed to write GeoIP tar file to $tar_path - Check permissions");
         return;
     }
-    teckglobal_bfp_debug("Wrote GeoIP tar file to $tar_path");
 
     try {
         $phar = new PharData($tar_path);
         $phar->extractTo($geo_dir, null, true);
-        teckglobal_bfp_debug("Extracted tar to $geo_dir");
-
         $mmdb_files = glob($geo_dir . '{,*/}*.mmdb', GLOB_BRACE);
         if (empty($mmdb_files)) {
             teckglobal_bfp_debug("No .mmdb files found after extraction in $geo_dir or subdirs");
@@ -344,8 +345,6 @@ function teckglobal_bfp_download_geoip(): void {
 
         if (!unlink($tar_path)) {
             teckglobal_bfp_debug("Failed to delete $tar_path");
-        } else {
-            teckglobal_bfp_debug("Deleted $tar_path");
         }
 
         $dir_contents = scandir($geo_dir);
@@ -360,11 +359,7 @@ function teckglobal_bfp_download_geoip(): void {
             }
             $full_path = $geo_dir . '/' . $item;
             if (is_dir($full_path)) {
-                if (teckglobal_bfp_remove_dir($full_path)) {
-                    teckglobal_bfp_debug("Recursively removed subdir $full_path");
-                } else {
-                    teckglobal_bfp_debug("Failed to recursively remove subdir $full_path");
-                }
+                teckglobal_bfp_remove_dir($full_path);
             }
         }
         teckglobal_bfp_debug("GeoIP file downloaded and extracted to $geo_file");
@@ -412,8 +407,7 @@ function teckglobal_bfp_manage_ips_page(): void {
         <form method="post" action="">
             <?php wp_nonce_field('teckglobal_bfp_ban_ip'); ?>
             <p>
-
-<label for="ip_to ban">IP Address to Ban:</label><br />
+                <label for="ip_to_ban">IP Address to Ban:</label><br />
                 <input type="text" name="ip_to_ban" value="" />
                 <input type="submit" name="teckglobal_bfp_ban_ip" class="button-primary" value="Ban IP" />
             </p>
@@ -494,7 +488,6 @@ function teckglobal_bfp_ip_logs_page(): void {
         $limit = absint($_GET['log_limit']);
         update_user_option(get_current_user_id(), 'teckglobal_bfp_log_limit', $limit);
     }
-    teckglobal_bfp_debug("Log limit set to: $limit");
 
     $page = isset($_GET['log_page']) ? absint($_GET['log_page']) : 1;
     $page = max(1, $page);
@@ -515,7 +508,6 @@ function teckglobal_bfp_ip_logs_page(): void {
             ];
         }
     }
-    teckglobal_bfp_debug("Locations data prepared for map: " . json_encode($locations));
     $locations_json = json_encode($locations);
 
     $base_url = admin_url("admin.php?page=teckglobal-bfp-ip-logs&log_limit=$limit");
