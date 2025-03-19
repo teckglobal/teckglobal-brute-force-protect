@@ -75,7 +75,7 @@ composer install
 Changelog
 1.0.2 - 2025-03-19
 Fixed excessive debug logging by limiting to admin, cron, and AJAX contexts.
-Improved update troubleshooting with conditional logs.
+Fixed auto-update toggle by ensuring proper script localization.
 
 1.0.1 - 2025-03-18
 Added "Enable Debug Logging" option to Settings page for user-controlled debug logs.

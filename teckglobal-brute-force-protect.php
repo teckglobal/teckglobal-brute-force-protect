@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.1');
+define('TECKGLOBAL_BFP_VERSION', '1.0.2');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -240,24 +240,8 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
 
     wp_enqueue_script('jquery');
 
-    if (strpos($hook, 'brute-force-protect_page_teckglobal-bfp-ip-logs') !== false) {
-        teckglobal_bfp_debug("Loading Leaflet assets for IP Logs & Map page: $hook");
-
-        wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
-        teckglobal_bfp_debug("Leaflet CSS enqueued from CDN: https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
-
-        wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', ['jquery'], '1.9.4', true);
-        teckglobal_bfp_debug("Leaflet JS enqueued from CDN: https://unpkg.com/leaflet@1.9.4/dist/leaflet.js");
-
-        wp_add_inline_script('leaflet-js', 'console.log("Leaflet JS loaded at: " + new Date().toISOString() + "; L defined: " + (typeof L !== "undefined"));');
-        teckglobal_bfp_debug("Added inline script to verify Leaflet load");
-
-        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery', 'leaflet-js'], TECKGLOBAL_BFP_VERSION, true);
-        teckglobal_bfp_debug("Plugin script enqueued with dependencies: jquery, leaflet-js");
-    } else {
-        teckglobal_bfp_debug("Loading standard script for hook: $hook");
-        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery'], TECKGLOBAL_BFP_VERSION, true);
-    }
+    wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery'], TECKGLOBAL_BFP_VERSION, true);
+    teckglobal_bfp_debug("Plugin script enqueued with jQuery dependency");
 
     $auto_updates = (array) get_option('auto_update_plugins', []);
     $is_enabled = in_array('teckglobal-brute-force-protect/teckglobal-brute-force-protect.php', $auto_updates);
@@ -269,8 +253,18 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
         'auto_update_status' => $is_enabled ? 'enabled' : 'disabled',
         'image_path' => TECKGLOBAL_BFP_URL . 'assets/css/images/'
     ];
-    wp_localize_script('teckglobal_bfp-script', 'teckglobal_bfp_ajax', $localize_data);
+    wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', $localize_data);
     teckglobal_bfp_debug("Localized teckglobal_bfp_ajax for hook $hook: " . json_encode($localize_data));
+
+    if (strpos($hook, 'brute-force-protect_page_teckglobal-bfp-ip-logs') !== false) {
+        teckglobal_bfp_debug("Loading Leaflet assets for IP Logs & Map page: $hook");
+        wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
+        wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', ['jquery'], '1.9.4', true);
+        wp_add_inline_script('leaflet-js', 'console.log("Leaflet JS loaded at: " + new Date().toISOString() + "; L defined: " + (typeof L !== "undefined"));');
+        wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery', 'leaflet-js'], TECKGLOBAL_BFP_VERSION, true);
+        wp_localize_script('teckglobal-bfp-script', 'teckglobal_bfp_ajax', $localize_data);
+        teckglobal_bfp_debug("Re-enqueued script with Leaflet dependency and re-localized");
+    }
 }
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
 
