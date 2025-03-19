@@ -1,4 +1,4 @@
-<<?php
+<?php
 /*
  * Plugin Name: TeckGlobal Brute Force Protect
  * Author: TeckGlobal LLC, xAI-Grok
