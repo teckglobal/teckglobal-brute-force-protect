@@ -1,113 +1,177 @@
-console.log('script.js loaded');
-console.log('Leaflet available:', typeof L !== 'undefined' ? 'Yes' : 'No');
+console.log('script.js loaded at: ' + new Date().toISOString());
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('map')) {
-        console.log('Map container found, initializing...');
+jQuery(document).ready(function($) {
+    console.log('jQuery available: ' + (typeof $ !== 'undefined' ? 'Yes' : 'No'));
+    console.log('jQuery document.ready fired at: ' + new Date().toISOString());
 
-        // Check for teckglobal_bfp_ajax and use fallback if undefined
-        let imagePath;
-        if (typeof teckglobal_bfp_ajax !== 'undefined' && teckglobal_bfp_ajax.image_path) {
-            imagePath = teckglobal_bfp_ajax.image_path;
-        } else {
-            console.warn('teckglobal_bfp_ajax is not defined; using fallback image path');
-            imagePath = '/wp-content/plugins/teckglobal-brute-force-protect/assets/css/images/';
+    var $toggleLinks = $('.teckglobal-bfp-toggle');
+    console.log('Initial check found ' + $toggleLinks.length + ' toggle links');
+    if ($toggleLinks.length > 0) {
+        console.log('First toggle link HTML: ' + $toggleLinks[0].outerHTML);
+    } else {
+        console.warn('No toggle links found on initial check.');
+    }
+
+    $(document).on('click', '.teckglobal-bfp-toggle', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var $link = $(this);
+        var action = $link.attr('data-action');
+        var plugin = $link.attr('data-plugin');
+
+        console.log('Toggle clicked at: ' + new Date().toISOString());
+        console.log('Action: ' + action + ', Plugin: ' + plugin);
+        console.log('Clicked element: ' + $link[0].outerHTML);
+
+        if (typeof teckglobal_bfp_ajax === 'undefined') {
+            console.error('teckglobal_bfp_ajax not defined. Check localization.');
+            return;
         }
 
-        const customIcon = L.icon({
-            iconUrl: imagePath + 'marker-icon.png',
-            iconRetinaUrl: imagePath + 'marker-icon-2x.png',
-            shadowUrl: imagePath + 'marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
-        console.log('Icon URLs set:', {
-            iconUrl: imagePath + 'marker-icon.png',
-            iconRetinaUrl: imagePath + 'marker-icon-2x.png',
-            shadowUrl: imagePath + 'marker-shadow.png'
-        });
+        console.log('teckglobal_bfp_ajax: ' + JSON.stringify(teckglobal_bfp_ajax));
 
-        var map = L.map('map').setView([51.505, -0.09], 2);
-        console.log('Map initialized at [51.505, -0.09], zoom 2');
+        $link.after('<span class="spinner" style="display:inline-block; margin-left:5px; visibility:visible;"></span>');
+        $link.css('pointer-events', 'none');
 
-        var aerialLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        console.log('Aerial layer added');
-
-        var terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
-        });
-
-        var baseLayers = {
-            "Aerial": aerialLayer,
-            "Terrain": terrainLayer
-        };
-        L.control.layers(baseLayers).addTo(map);
-        console.log('Layer control added');
-
-        var locationsData = typeof locations !== 'undefined' && locations.length > 0 ? locations : [
-            { lat: 51.505, lng: -0.09, ip: 'Test IP', country: 'Test Country' }
-        ];
-        console.log('Using locations:', locationsData);
-
-        var markers = {};
-        locationsData.forEach(function(location) {
-            if (location.lat && location.lng) {
-                var marker = L.marker([location.lat, location.lng], { icon: customIcon }).addTo(map);
-                marker.bindPopup("<b>IP:</b> " + location.ip + "<br><b>Country:</b> " + location.country);
-                markers[location.ip] = marker;
-                console.log('Marker added for IP:', location.ip, 'at', location.lat, location.lng);
-            } else {
-                console.warn('Invalid location data:', location);
+        $.ajax({
+            url: teckglobal_bfp_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'toggle_auto_update_plugin',
+                _wpnonce: teckglobal_bfp_ajax.toggle_nonce,
+                plugin: plugin,
+                toggle_action: action
+            },
+            beforeSend: function() {
+                console.log('Sending AJAX with data: ' + JSON.stringify({
+                    action: 'toggle_auto_update_plugin',
+                    _wpnonce: teckglobal_bfp_ajax.toggle_nonce,
+                    plugin: plugin,
+                    toggle_action: action
+                }));
+            },
+            success: function(response) {
+                console.log('AJAX response: ' + JSON.stringify(response));
+                if (response.success) {
+                    console.log('Toggle successful: ' + response.data.status);
+                    $link.text(response.data.status === 'enabled' ? 'Disable auto-updates' : 'Enable auto-updates');
+                    $link.attr('data-action', response.data.status === 'enabled' ? 'disable' : 'enable');
+                    $link.attr('aria-label', response.data.status === 'enabled' ? 'Disable auto-updates' : 'Enable auto-updates');
+                } else {
+                    console.error('Toggle failed: ' + response.data.message);
+                }
+                $link.next('.spinner').remove();
+                $link.css('pointer-events', 'auto');
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error - Status: ' + status + ', Error: ' + error);
+                console.error('Response text: ' + xhr.responseText);
+                $link.next('.spinner').remove();
+                $link.css('pointer-events', 'auto');
             }
         });
+    });
 
-        document.querySelectorAll('.teckglobal-unban-ip').forEach(function(button) {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                var ip = this.getAttribute('data-ip');
+    setTimeout(function() {
+        var $toggleLinks = $('.teckglobal-bfp-toggle');
+        console.log('Fallback check at: ' + new Date().toISOString());
+        console.log('Found ' + $toggleLinks.length + ' toggle links');
+        if ($toggleLinks.length > 0) {
+            console.log('First toggle link in fallback: ' + $toggleLinks[0].outerHTML);
+        } else {
+            console.warn('No toggle links found. DOM issue or script conflict.');
+        }
+    }, 2000);
 
-                if (typeof teckglobal_bfp_ajax === 'undefined') {
-                    console.error('teckglobal_bfp_ajax not defined; AJAX unban disabled');
-                    return;
+    if ($('#map').length) {
+        console.log('Map container found, initializing at: ' + new Date().toISOString());
+
+        // Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.error('Leaflet (L) is not defined. Check if leaflet.js is loading correctly.');
+            return;
+        }
+
+        // Initialize map with a default global view
+        var map = L.map('map').setView([0, 0], 1);
+        console.log('Map initialized with default view [0, 0] at zoom 1');
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        console.log('OSM tile layer added');
+
+        // Check for locations data
+        var locationsData = typeof locations !== 'undefined' ? locations : [];
+        console.log('Locations data received: ' + JSON.stringify(locationsData));
+
+        if (locationsData.length > 0) {
+            var markers = L.layerGroup().addTo(map);
+            var bounds = [];
+
+            locationsData.forEach(function(location) {
+                if (location.lat && location.lng && !isNaN(location.lat) && !isNaN(location.lng)) {
+                    var marker = L.marker([location.lat, location.lng]).addTo(markers);
+                    marker.bindPopup("<b>IP:</b> " + location.ip + "<br><b>Country:</b> " + location.country);
+                    bounds.push([location.lat, location.lng]);
+                    console.log('Added marker for IP ' + location.ip + ' at [' + location.lat + ', ' + location.lng + ']');
+                } else {
+                    console.warn('Invalid coordinates for IP ' + location.ip + ': lat=' + location.lat + ', lng=' + location.lng);
                 }
+            });
 
-                jQuery.ajax({
-                    url: teckglobal_bfp_ajax.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'teckglobal_bfp_unban_ip',
-                        nonce: teckglobal_bfp_ajax.nonce,
-                        ip: ip
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            if (markers[ip]) {
-                                map.removeLayer(markers[ip]);
-                                delete markers[ip];
-                                console.log('Marker removed for IP: ' + ip);
-                            }
-                            var row = button.closest('tr');
-                            row.querySelector('td:nth-child(4)').textContent = 'No';
-                            row.querySelector('td:nth-child(5)').textContent = 'N/A';
-                            row.querySelector('td:nth-child(7)').textContent = 'No';
-                            row.querySelector('td:nth-child(8)').textContent = 'No';
-                            row.querySelector('td:nth-child(9)').textContent = 'No';
-                            row.querySelector('td:nth-child(10)').innerHTML = 'N/A';
-                        } else {
-                            console.error('Unban failed:', response.data.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX error:', error);
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+                console.log('Map zoomed to bounds: ' + JSON.stringify(bounds));
+            } else {
+                console.warn('No valid coordinates found; retaining default view');
+            }
+        } else {
+            console.log('No locations data available to plot');
+            var message = L.marker([0, 0], {
+                icon: L.divIcon({
+                    className: 'map-message',
+                    html: 'No banned IPs with location data on this page'
+                })
+            }).addTo(map);
+        }
+
+        // Handle unban button clicks
+        $('.teckglobal-unban-ip').on('click', function(e) {
+            e.preventDefault();
+            var ip = $(this).attr('data-ip');
+            if (typeof teckglobal_bfp_ajax === 'undefined') {
+                console.error('teckglobal_bfp_ajax not defined');
+                return;
+            }
+            console.log('Unban clicked for IP: ' + ip);
+
+            $.ajax({
+                url: teckglobal_bfp_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'teckglobal_bfp_unban_ip',
+                    nonce: teckglobal_bfp_ajax.unban_nonce,
+                    ip: ip
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log('IP ' + ip + ' unbanned successfully');
+                        var $row = $(this).closest('tr');
+                        $row.find('td:nth-child(4)').text('No');
+                        $row.find('td:nth-child(5)').text('N/A');
+                        $row.find('td:nth-child(10)').html('Ban Expired');
+                    } else {
+                        console.error('Unban failed: ' + response.data.message);
                     }
-                });
+                }.bind(this),
+                error: function(xhr, status, error) {
+                    console.error('AJAX error on unban: ' + error);
+                }
             });
         });
     } else {
-        console.error('Map element not found.');
+        console.log('No map container found (expected on plugins.php)');
     }
 });

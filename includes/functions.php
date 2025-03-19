@@ -1,11 +1,23 @@
 <?php
+/**
+ * TeckGlobal Brute Force Protect - Helper Functions
+ *
+ * This file contains utility functions for the TeckGlobal Brute Force Protect plugin.
+ * It handles IP logging, banning, GeoIP lookups, and admin page logic (except settings, which is in the main file).
+ */
+
 if (!defined('ABSPATH')) {
-    exit;
+    exit; // Prevent direct access
 }
 
 require_once TECKGLOBAL_BFP_PATH . 'vendor/autoload.php';
 use GeoIp2\Database\Reader;
 
+/**
+ * Log an attempt from an IP address
+ *
+ * @param string $ip The IP address to log
+ */
 function teckglobal_bfp_log_attempt(string $ip): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -70,6 +82,12 @@ function teckglobal_bfp_log_attempt(string $ip): void {
     }
 }
 
+/**
+ * Get the number of attempts for an IP
+ *
+ * @param string $ip The IP address to check
+ * @return int The number of attempts
+ */
 function teckglobal_bfp_get_attempts(string $ip): int {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -77,6 +95,12 @@ function teckglobal_bfp_get_attempts(string $ip): int {
     return $row ? (int) $row->attempts : 0;
 }
 
+/**
+ * Ban an IP address
+ *
+ * @param string $ip The IP address to ban
+ * @param string $reason The reason for the ban (brute_force, scan_exploit, manual)
+ */
 function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -147,6 +171,11 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     teckglobal_bfp_debug("IP $ip banned until $ban_expiry for reason: $reason");
 }
 
+/**
+ * Unban an IP address
+ *
+ * @param string $ip The IP address to unban
+ */
 function teckglobal_bfp_unban_ip(string $ip): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -158,6 +187,12 @@ function teckglobal_bfp_unban_ip(string $ip): void {
     teckglobal_bfp_debug("IP $ip unbanned, ban reason flags preserved");
 }
 
+/**
+ * Check if an IP is banned
+ *
+ * @param string $ip The IP address to check
+ * @return bool True if banned, false otherwise
+ */
 function teckglobal_bfp_is_ip_banned(string $ip): bool {
     if (teckglobal_bfp_is_ip_excluded($ip)) {
         return false;
@@ -177,6 +212,12 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
     return false;
 }
 
+/**
+ * Check if an IP is excluded from banning/logging
+ *
+ * @param string $ip The IP address to check
+ * @return bool True if excluded, false otherwise
+ */
 function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     $excluded_ips = get_option('teckglobal_bfp_excluded_ips', '');
     if (empty($excluded_ips)) {
@@ -199,6 +240,12 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     return false;
 }
 
+/**
+ * Recursively remove a directory and its contents
+ *
+ * @param string $dir The directory path to remove
+ * @return bool True on success, false on failure
+ */
 function teckglobal_bfp_remove_dir(string $dir): bool {
     if (!is_dir($dir)) {
         return true;
@@ -232,6 +279,9 @@ function teckglobal_bfp_remove_dir(string $dir): bool {
     }
 }
 
+/**
+ * Download or update GeoIP database
+ */
 function teckglobal_bfp_download_geoip(): void {
     $geo_dir = TECKGLOBAL_BFP_GEO_DIR;
     $geo_file = TECKGLOBAL_BFP_GEO_FILE;
@@ -324,80 +374,9 @@ function teckglobal_bfp_download_geoip(): void {
 }
 add_action('teckglobal_bfp_update_geoip', 'teckglobal_bfp_download_geoip');
 
-function teckglobal_bfp_settings_page(): void {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-
-    if (isset($_POST['teckglobal_bfp_settings']) && check_admin_referer('teckglobal_bfp_settings')) {
-        update_option('teckglobal_bfp_geo_path', sanitize_text_field($_POST['teckglobal_bfp_geo_path']));
-        update_option('teckglobal_bfp_max_attempts', intval($_POST['teckglobal_bfp_max_attempts']));
-        update_option('teckglobal_bfp_ban_time', intval($_POST['teckglobal_bfp_ban_time']));
-        update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['teckglobal_bfp_auto_ban_invalid']) ? 1 : 0);
-        update_option('teckglobal_bfp_excluded_ips', sanitize_textarea_field($_POST['teckglobal_bfp_excluded_ips']));
-        update_option('teckglobal_bfp_exploit_protection', isset($_POST['teckglobal_bfp_exploit_protection']) ? 1 : 0);
-        update_option('teckglobal_bfp_exploit_max_attempts', intval($_POST['teckglobal_bfp_exploit_max_attempts']));
-        update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['teckglobal_bfp_maxmind_key']));
-        update_option('teckglobal_bfp_enable_updates', isset($_POST['teckglobal_bfp_enable_updates']) ? 1 : 0);
-        teckglobal_bfp_download_geoip();
-        echo '<div class="updated"><p>Settings saved.</p></div>';
-    }
-
-    ?>
-    <div class="wrap">
-        <h1>TeckGlobal Brute Force Protect Settings</h1>
-        <form method="post" action="">
-            <?php wp_nonce_field('teckglobal_bfp_settings'); ?>
-            <h3>General Settings</h3>
-            <p>
-                <label for="teckglobal_bfp_geo_path">GeoLite2 Database Path:</label><br />
-                <input type="text" name="teckglobal_bfp_geo_path" value="<?php echo esc_attr(get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE)); ?>" size="50" /><br />
-                <small>Default: <?php echo esc_html(TECKGLOBAL_BFP_GEO_FILE); ?></small>
-            </p>
-            <p>
-                <label for="teckglobal_bfp_max_attempts">Max Login Attempts Before Ban:</label><br />
-                <input type="number" name="teckglobal_bfp_max_attempts" value="<?php echo esc_attr(get_option('teckglobal_bfp_max_attempts', 5)); ?>" min="1" />
-            </p>
-            <p>
-                <label for="teckglobal_bfp_ban_time">Ban Duration (minutes):</label><br />
-                <input type="number" name="teckglobal_bfp_ban_time" value="<?php echo esc_attr(get_option('teckglobal_bfp_ban_time', 60)); ?>" min="1" />
-            </p>
-            <p>
-                <input type="checkbox" name="teckglobal_bfp_auto_ban_invalid" value="1" <?php checked(1, get_option('teckglobal_bfp_auto_ban_invalid', 0)); ?> />
-                Auto-ban IPs attempting logins with invalid usernames
-            </p>
-            <p>
-                <label for="teckglobal_bfp_excluded_ips">Excluded IPs/Subnets (one per line):</label><br />
-                <textarea name="teckglobal_bfp_excluded_ips" rows="5" cols="50"><?php echo esc_textarea(get_option('teckglobal_bfp_excluded_ips', '')); ?></textarea><br />
-                <small>Example: 192.168.1.1 or 10.0.0.0/24</small>
-            </p>
-            <h3>GeoIP Settings</h3>
-            <p>
-                <label for="teckglobal_bfp_maxmind_key">MaxMind License Key:</label><br />
-                <input type="text" name="teckglobal_bfp_maxmind_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_maxmind_key', '')); ?>" size="50" /><br />
-                <small>Get your free key from <a href="https://www.maxmind.com/en/geolite2/signup" target="_blank">MaxMind GeoLite2 Signup</a>. Required for automatic GeoIP downloads (updates Tuesdays and Fridays).</small>
-            </p>
-            <h3>Exploit Scan Protection</h3>
-            <p>
-                <input type="checkbox" name="teckglobal_bfp_exploit_protection" value="1" <?php checked(1, get_option('teckglobal_bfp_exploit_protection', 0)); ?> />
-                Enable exploit scan protection (bans IPs scanning for vulnerabilities)
-            </p>
-            <p>
-                <label for="teckglobal_bfp_exploit_max_attempts">Max Exploit Scan Attempts Before Ban:</label><br />
-                <input type="number" name="teckglobal_bfp_exploit_max_attempts" value="<?php echo esc_attr(get_option('teckglobal_bfp_exploit_max_attempts', 3)); ?>" min="1" />
-            </p>
-            <h3>Plugin Updates</h3>
-            <p>
-                <input type="checkbox" name="teckglobal_bfp_enable_updates" value="1" <?php checked(1, get_option('teckglobal_bfp_enable_updates', 1)); ?> />
-                Enable automatic update checks from GitHub
-                <br /><small>Checks for updates on the <a href="https://github.com/teckglobal/teckglobal-brute-force-protect/releases" target="_blank">GitHub repository</a>.</small>
-            </p>
-            <p><input type="submit" name="teckglobal_bfp_settings" class="button-primary" value="Save Settings" /></p>
-        </form>
-    </div>
-    <?php
-}
-
+/**
+ * Manage IPs page
+ */
 function teckglobal_bfp_manage_ips_page(): void {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have sufficient permissions to access this page.');
@@ -433,7 +412,8 @@ function teckglobal_bfp_manage_ips_page(): void {
         <form method="post" action="">
             <?php wp_nonce_field('teckglobal_bfp_ban_ip'); ?>
             <p>
-                <label for="ip_to_ban">IP Address to Ban:</label><br />
+
+<label for="ip_to ban">IP Address to Ban:</label><br />
                 <input type="text" name="ip_to_ban" value="" />
                 <input type="submit" name="teckglobal_bfp_ban_ip" class="button-primary" value="Ban IP" />
             </p>
@@ -451,6 +431,15 @@ function teckglobal_bfp_manage_ips_page(): void {
     <?php
 }
 
+/**
+ * Get IP logs with pagination
+ *
+ * @param int $limit Number of logs per page
+ * @param int $page Current page number
+ * @param string $orderby Column to sort by
+ * @param string $order Sort direction (ASC/DESC)
+ * @return array Logs and total count
+ */
 function teckglobal_bfp_get_ip_logs(int $limit = 10, int $page = 1, string $orderby = 'timestamp', string $order = 'DESC'): array {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
@@ -475,6 +464,9 @@ function teckglobal_bfp_get_ip_logs(int $limit = 10, int $page = 1, string $orde
     ];
 }
 
+/**
+ * IP Logs & Map page
+ */
 function teckglobal_bfp_ip_logs_page(): void {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have sufficient permissions to access this page.');
