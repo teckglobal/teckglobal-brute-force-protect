@@ -5,7 +5,7 @@
 - **Plugin URI**: [https://teck-global.com/wordpress-plugins](https://teck-global.com/wordpress-plugins)
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
-- **Tested Up To**: 6.7
+- **Tested Up To**: 6.7.2
 - **Stable Tag**: 1.0.4
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
