@@ -807,4 +807,9 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];
 }
+<<<<<<< HEAD
 add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
+=======
+
+add_filter('plugins_api', 'teckglobal_bfp_plugins_api_filter', 10, 3);
+>>>>>>> 4c803db95d888e1611153c36d6112fae30d439df
