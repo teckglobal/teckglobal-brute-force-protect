@@ -56,8 +56,10 @@ If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me
 
 1. **Settings Page**: Configure max attempts, ban duration, and exclusions.
    ![Settings Page](https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp)
-2. **Manage IPs**: Ban or unban IPs manually.
+
+2. **Manage IPs**: Ban or unban IPs manually.  
    ![Manage IPs](https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp)
+
 3. **IP Logs & Map**: View logs and banned IP locations on a map.
    ![IP Logs & Map](https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp)
 
