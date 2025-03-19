@@ -75,6 +75,9 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
+1.0.2 - 2025-03-19
+Enhanced Excluded IPs: Added support for IP/subnet entries with notes in a dynamic table.
+
 1.0.1 - 2025-03-19
 Added ban duration dropdown with options from 15 minutes to 1 week.
 1.0.0 - 2025-03-19

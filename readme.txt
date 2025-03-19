@@ -52,6 +52,9 @@ Special thanks to xAI-Grok for invaluable assistance in development and debuggin
 3. View logs of banned IPs with an interactive map in IP Logs & Map. (screenshot-3.png)
 
 == Changelog ==
+= 1.0.2 - 2025-03-19 =
+- Enhanced Excluded IPs: Added support for IP/subnet entries with notes in a dynamic table.
+
 = 1.0.1 - 2025-03-19 =
 - Added ban duration dropdown with options from 15 minutes to 1 week.
 

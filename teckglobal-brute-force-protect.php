@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.1
+ * Version: 1.0.2
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.1');
+define('TECKGLOBAL_BFP_VERSION', '1.0.2');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -263,7 +263,7 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_max_attempts', 5);
     add_option('teckglobal_bfp_ban_time', '60-minutes');
     add_option('teckglobal_bfp_auto_ban_invalid', 0);
-    add_option('teckglobal_bfp_excluded_ips', '');
+    add_option('teckglobal_bfp_excluded_ips', []);
     add_option('teckglobal_bfp_exploit_protection', 0);
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
     add_option('teckglobal_bfp_maxmind_key', '');
@@ -298,9 +298,9 @@ function teckglobal_bfp_deactivate() {
         $wpdb->query("DROP TABLE IF EXISTS $table_name");
         $options = [
             'teckglobal_bfp_geo_path', 'teckglobal_bfp_max_attempts', 'teckglobal_bfp_ban_time',
-            'teckglobal_bfp_auto_ban_invalid', 'teckglobal_bfp_excluded_ips', 'teckglobal_bfp_exploit_protection',
-            'teckglobal_bfp_exploit_max_attempts', 'teckglobal_bfp_maxmind_key', 'teckglobal_bfp_remove_data',
-            'teckglobal_bfp_enable_logging'
+            'teckglobal_bfp_auto_ban_invalid', 'teckglobal_bfp_excluded_ips',
+            'teckglobal_bfp_exploit_protection', 'teckglobal_bfp_exploit_max_attempts',
+            'teckglobal_bfp_maxmind_key', 'teckglobal_bfp_remove_data', 'teckglobal_bfp_enable_logging'
         ];
         foreach ($options as $option) {
             delete_option($option);
@@ -319,7 +319,19 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_max_attempts', absint($_POST['max_attempts']));
         update_option('teckglobal_bfp_ban_time', sanitize_text_field($_POST['ban_time']));
         update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['auto_ban_invalid']) ? 1 : 0);
-        update_option('teckglobal_bfp_excluded_ips', sanitize_textarea_field($_POST['excluded_ips']));
+        
+        $excluded_ips = [];
+        if (isset($_POST['excluded_ip']) && is_array($_POST['excluded_ip'])) {
+            foreach ($_POST['excluded_ip'] as $index => $ip) {
+                $ip = sanitize_text_field($ip);
+                $note = sanitize_text_field($_POST['excluded_note'][$index] ?? '');
+                if (!empty($ip) && (filter_var($ip, FILTER_VALIDATE_IP) || preg_match('/^\d+\.\d+\.\d+\.\d+\/\d+$/', $ip))) {
+                    $excluded_ips[] = ['ip' => $ip, 'note' => $note];
+                }
+            }
+        }
+        update_option('teckglobal_bfp_excluded_ips', $excluded_ips);
+        
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['exploit_protection']) ? 1 : 0);
         update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
@@ -328,6 +340,7 @@ function teckglobal_bfp_settings_page() {
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
+    $excluded_ips = get_option('teckglobal_bfp_excluded_ips', []);
     ?>
     <div class="wrap">
         <h1>TeckGlobal Brute Force Protect Settings</h1>
@@ -366,8 +379,31 @@ function teckglobal_bfp_settings_page() {
                     <td><input type="checkbox" name="auto_ban_invalid" <?php checked(get_option('teckglobal_bfp_auto_ban_invalid', 0), 1); ?> /></td>
                 </tr>
                 <tr>
-                    <th>Excluded IPs (one per line)</th>
-                    <td><textarea name="excluded_ips" rows="5" cols="50"><?php echo esc_textarea(get_option('teckglobal_bfp_excluded_ips', '')); ?></textarea></td>
+                    <th>Excluded IPs</th>
+                    <td>
+                        <table id="excluded-ips-table" class="widefat" style="max-width: 600px;">
+                            <thead>
+                                <tr>
+                                    <th>IP or Subnet</th>
+                                    <th>Note</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="excluded-ips-rows">
+                                <?php
+                                foreach ($excluded_ips as $index => $entry) {
+                                    echo '<tr>';
+                                    echo '<td><input type="text" name="excluded_ip[]" value="' . esc_attr($entry['ip']) . '" /></td>';
+                                    echo '<td><input type="text" name="excluded_note[]" value="' . esc_attr($entry['note']) . '" /></td>';
+                                    echo '<td><button type="button" class="button remove-row">Remove</button></td>';
+                                    echo '</tr>';
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                        <p><button type="button" id="add-excluded-ip" class="button">Add IP/Subnet</button></p>
+                        <p><small>Enter one IP (e.g., 192.168.1.1) or CIDR subnet (e.g., 10.0.0.0/24) per row with an optional note.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>Enable Exploit Protection</th>
@@ -395,6 +431,21 @@ function teckglobal_bfp_settings_page() {
             </p>
         </form>
     </div>
+    <script>
+    jQuery(document).ready(function($) {
+        $('#add-excluded-ip').click(function() {
+            var row = '<tr>' +
+                '<td><input type="text" name="excluded_ip[]" value="" /></td>' +
+                '<td><input type="text" name="excluded_note[]" value="" /></td>' +
+                '<td><button type="button" class="button remove-row">Remove</button></td>' +
+                '</tr>';
+            $('#excluded-ips-rows').append(row);
+        });
+        $(document).on('click', '.remove-row', function() {
+            $(this).closest('tr').remove();
+        });
+    });
+    </script>
     <?php
 }
 

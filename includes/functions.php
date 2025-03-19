@@ -102,17 +102,16 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $ban_time = get_option('teckglobal_bfp_ban_time', '60-minutes');
     
-    // Parse value and unit
     list($value, $unit) = explode('-', $ban_time);
     $value = (int) $value;
     $interval = match ($unit) {
         'minutes' => "$value minutes",
-        default => "60 minutes", // Fallback
+        default => "60 minutes",
     };
     $ban_expiry = date('Y-m-d H:i:s', strtotime("+$interval"));
 
     if (teckglobal_bfp_is_ip_excluded($ip)) {
-        return; // Skip banning and logging for excluded IPs
+        return;
     }
 
     $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
@@ -208,7 +207,7 @@ function teckglobal_bfp_is_ip_banned(string $ip): bool {
             teckglobal_bfp_debug("IP $ip ban expired, unbanned with preserved flags.");
             return false;
         }
-        return true; // No debug here unless needed
+        return true;
     }
     return false;
 }
@@ -224,18 +223,18 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     static $last_result = null;
 
     if ($ip === $last_excluded_ip) {
-        return $last_result; // Skip repeat checks
+        return $last_result;
     }
 
-    $excluded_ips = get_option('teckglobal_bfp_excluded_ips', '');
-    if (empty($excluded_ips)) {
+    $excluded_ips = get_option('teckglobal_bfp_excluded_ips', []);
+    if (empty($excluded_ips) || !is_array($excluded_ips)) {
         $last_excluded_ip = $ip;
         $last_result = false;
         return false;
     }
 
-    $excluded_list = array_map('trim', explode("\n", $excluded_ips));
-    foreach ($excluded_list as $excluded) {
+    foreach ($excluded_ips as $entry) {
+        $excluded = $entry['ip'];
         if (strpos($excluded, '/')) {
             list($subnet, $mask) = explode('/', $excluded);
             if (ip2long($ip) & ~((1 << (32 - $mask)) - 1) == ip2long($subnet)) {
