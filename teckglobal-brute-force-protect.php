@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.5
+ * Version: 1.0.6
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.5');
+define('TECKGLOBAL_BFP_VERSION', '1.0.6');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -442,7 +442,7 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
     }
 
     $plugin_dir = WP_PLUGIN_DIR . '/teckglobal-brute-force-protect';
-    $temp_dir = isset($upgrader->result['destination']) ? $upgrader->result['destination'] : '';
+    $temp_dir = isset($upgrader->result['destination']) ? trailingslashit($upgrader->result['destination']) : '';
 
     teckglobal_bfp_debug("Update detected. Expected plugin dir: $plugin_dir");
     teckglobal_bfp_debug("Real temp dir from upgrader: $temp_dir");

@@ -39,7 +39,7 @@ Logs & Map: View detailed logs and a Leaflet-powered map of banned IP locations.
 Auto-Updates: Seamless updates via GitHub releases.
 
 == Requirements ==
-WordPress 5.0 or higher (tested up to 6.7).
+WordPress 5.0 or higher (tested up to 6.7.2).
 
 PHP 7.4 or later.
 
@@ -67,6 +67,9 @@ View logs of banned IPs with an interactive map in IP Logs & Map.
 [screenshot-3]: https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp
 
 == Changelog ==
+= 1.0.6 - 2025-03-19 =
+Fixed Wordpress Updating folder rename errors.
+
 = 1.0.5 - 2025-03-19 =
 Fixed Wordpress Updating folder rename errors.
 
