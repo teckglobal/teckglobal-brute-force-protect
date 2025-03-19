@@ -22,8 +22,8 @@ function teckglobal_bfp_log_attempt(string $ip): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
 
-    if (teckglobal_bfp_is_ip_excluded($ip)) {
-        return; // Skip logging entirely for excluded IPs
+    if (teckglobal_bfp_is_ip_excluded($ip) || teckglobal_bfp_is_ip_whitelisted($ip)) {
+        return; // Skip logging for excluded or whitelisted IPs
     }
 
     $geo_path = get_option('teckglobal_bfp_geo_path', TECKGLOBAL_BFP_GEO_FILE);
@@ -58,6 +58,7 @@ function teckglobal_bfp_log_attempt(string $ip): void {
             ['ip' => $ip]
         );
         teckglobal_bfp_debug("Updated attempt count for IP $ip: $attempts");
+        teckglobal_bfp_detailed_log($ip, 'attempt', "Attempt #$attempts recorded");
     } else {
         $wpdb->insert(
             $table_name,
@@ -75,6 +76,7 @@ function teckglobal_bfp_log_attempt(string $ip): void {
             ]
         );
         teckglobal_bfp_debug("Logged first attempt for IP $ip");
+        teckglobal_bfp_detailed_log($ip, 'attempt', "First attempt recorded");
     }
 }
 
@@ -110,7 +112,7 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     };
     $ban_expiry = date('Y-m-d H:i:s', strtotime("+$interval"));
 
-    if (teckglobal_bfp_is_ip_excluded($ip)) {
+    if (teckglobal_bfp_is_ip_excluded($ip) || teckglobal_bfp_is_ip_whitelisted($ip)) {
         return;
     }
 
@@ -170,6 +172,7 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
         );
     }
     teckglobal_bfp_debug("IP $ip banned until $ban_expiry for reason: $reason");
+    teckglobal_bfp_detailed_log($ip, 'banned', "Banned until $ban_expiry for $reason");
 }
 
 /**
@@ -186,6 +189,7 @@ function teckglobal_bfp_unban_ip(string $ip): void {
         ['ip' => $ip]
     );
     teckglobal_bfp_debug("IP $ip unbanned, ban reason flags preserved");
+    teckglobal_bfp_detailed_log($ip, 'unbanned', "IP unbanned");
 }
 
 /**
@@ -195,7 +199,7 @@ function teckglobal_bfp_unban_ip(string $ip): void {
  * @return bool True if banned, false otherwise
  */
 function teckglobal_bfp_is_ip_banned(string $ip): bool {
-    if (teckglobal_bfp_is_ip_excluded($ip)) {
+    if (teckglobal_bfp_is_ip_excluded($ip) || teckglobal_bfp_is_ip_whitelisted($ip)) {
         return false;
     }
     global $wpdb;
@@ -251,6 +255,33 @@ function teckglobal_bfp_is_ip_excluded(string $ip): bool {
     $last_excluded_ip = $ip;
     $last_result = false;
     return false;
+}
+
+/**
+ * Check if an IP is whitelisted
+ *
+ * @param string $ip The IP address to check
+ * @return bool True if whitelisted, false otherwise
+ */
+function teckglobal_bfp_is_ip_whitelisted(string $ip): bool {
+    $whitelist = array_filter(explode("\n", trim(get_option('teckglobal_bfp_whitelist_ips', ''))));
+    return in_array($ip, $whitelist);
+}
+
+/**
+ * Log detailed attempt information
+ *
+ * @param string $ip The IP address
+ * @param string $type The type of action (attempt, banned, unbanned)
+ * @param string $message The log message
+ */
+function teckglobal_bfp_detailed_log(string $ip, string $type, string $message): void {
+    if (get_option('teckglobal_bfp_enable_debug_log', 0)) {
+        $log_file = WP_CONTENT_DIR . '/teckglobal-bfp-detailed.log';
+        $timestamp = current_time('Y-m-d H:i:s');
+        $log_entry = "[$timestamp] IP: $ip - Type: $type - $message\n";
+        file_put_contents($log_file, $log_entry, FILE_APPEND);
+    }
 }
 
 /**

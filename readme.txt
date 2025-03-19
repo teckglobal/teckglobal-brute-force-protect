@@ -1,72 +1,97 @@
 === TeckGlobal Brute Force Protect ===
-Contributors: teckglobal, xaigrok
+Contributors: teckglobal, xai-grok
 Donate link: https://teck-global.com/buy-me-a-coffee/
-Tags: wordpress, security, brute force, login protection, geolocation, ip management, wordpress plugin
+Tags: security, brute force, login protection, ip blocking, geolocation
 Requires at least: 5.0
 Tested up to: 6.7.2
-Stable tag: 1.0.1
+Stable tag: 1.0.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
-A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans, featuring IP management and geolocation capabilities.
+
+Protect your WordPress site from brute force login attacks and exploit scans with IP management and geolocation features.
 
 == Description ==
-TeckGlobal Brute Force Protect is a lightweight, powerful security plugin designed to safeguard your WordPress site from brute force login attempts and exploit scans. It tracks failed login attempts, bans offending IPs after a configurable threshold, and integrates with MaxMind’s GeoLite2 database for geolocation data. With an intuitive admin interface, you can manage banned IPs, view logs, and visualize attacker locations on a Leaflet-powered map (with local CSS/JS fallback if CDN fails).
 
-Completely free and open-source. If you find this plugin helpful, please consider supporting us with a donation at [TeckGlobal’s Buy Me a Coffee page](https://teck-global.com/buy-me-a-coffee/).
+TeckGlobal Brute Force Protect is a powerful security plugin by TeckGlobal LLC, enhanced by xAI's Grok, designed to shield your WordPress site from brute force login attempts and malicious exploit scans. It tracks failed login attempts, bans offending IPs, and provides detailed logs with geolocation data. With customizable settings and advanced features, it’s an essential tool for site administrators seeking robust protection.
 
-Special thanks to xAI-Grok for invaluable assistance in development and debugging.
+Key features include a dashboard widget for monitoring, a customizable block message, visual feedback on the login form, toggleable debug logs, and an IP whitelist to bypass checks. If you value this free plugin, please consider a donation at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
 
 == Installation ==
-1. Download the plugin ZIP from the [latest GitHub release](https://github.com/teckglobal/teckglobal-brute-force-protect/releases).
-2. In WordPress, navigate to **Plugins > Add New > Upload Plugin**.
-3. Upload the ZIP file and click "Install Now," then activate the plugin.
-4. Go to **Brute Force Protect > Settings** to configure:
-   - Set max login attempts, ban duration, and enable optional exploit protection.
-   - Add a MaxMind license key (free from [MaxMind GeoLite2 Signup](https://www.maxmind.com/en/geolite2/signup)) for GeoIP features.
-5. Visit **IP Logs & Map** to monitor activity and banned IPs.
 
-== Features ==
-- Brute Force Protection: Logs failed login attempts and bans IPs after a set number of tries.
-- Exploit Scan Detection: Blocks IPs scanning for vulnerabilities (e.g., phpMyAdmin, wp-config.php).
-- GeoIP Integration: Automatically downloads MaxMind GeoLite2 City database (with a free license key).
-- IP Management: Manually ban/unban IPs and exclude trusted IPs/subnets.
-- Logs & Map: View detailed logs and a Leaflet-powered map of banned IP locations.
-- Auto-Updates: Seamless updates via GitHub releases.
+1. **Upload the Plugin**:
+   - Download the plugin ZIP file.
+   - Go to `Plugins > Add New` in your WordPress admin panel.
+   - Click `Upload Plugin`, select the ZIP, and click `Install Now`.
 
-== Requirements ==
-- WordPress 5.0 or higher (tested up to 6.7.2).
-- PHP 7.4 or later.
-- Write permissions for wp-content/teckglobal-geoip/ (for GeoIP downloads).
+2. **Activate the Plugin**:
+   - After installation, click `Activate` or navigate to `Plugins` and activate it.
 
-== Configuration ==
-- Max Login Attempts: Default 5—adjust based on your security needs.
-- Ban Duration: Default 1 hour—choose from 15 minutes to 1 week.
-- Auto-Ban Invalid Usernames: Enable to ban IPs using non-existent usernames.
-- Excluded IPs: Add IPs or subnets (e.g., 192.168.1.1, 10.0.0.0/24) to whitelist.
-- MaxMind Key: Enter your key for automatic GeoIP updates (Tuesdays/Fridays).
+3. **Configure Settings**:
+   - Go to `TeckGlobal BFP > Settings` in the admin menu.
+   - Set max login attempts, ban duration, block message, and other options.
+   - (Optional) Add a MaxMind License Key for geolocation.
+
+4. **Monitor**:
+   - Check the dashboard widget for stats.
+   - Visit `TeckGlobal BFP > IP Logs & Map` for logs and a banned IP map.
+
+== Frequently Asked Questions ==
+
+= How does it detect brute force attempts? =
+It logs failed logins per IP and bans after exceeding the set limit (default: 5).
+
+= Can I change the ban message? =
+Yes, customize it under `TeckGlobal BFP > Settings` in the "Block Message" field.
+
+= What’s the visual feedback on the login form? =
+Banned IPs trigger a shake animation and red border on login attempts.
+
+= How do I enable debug logs? =
+Check "Enable Debug Logging" or "Enable Detailed Debug Log" in settings for logs in `wp-content/`.
+
+= How do I whitelist IPs? =
+Add IPs (one per line) in the "IP Whitelist" field under settings to skip brute force checks.
+
+= Is a MaxMind key required? =
+No, it’s optional for geolocation; without it, country data shows as "Unknown."
 
 == Screenshots ==
-1. Configure max attempts, ban duration, and excluded IPs in the Settings page. (screenshot-1.png)
-2. Add or remove IPs from the ban list in Manage IPs. (screenshot-2.png)
-3. View logs of banned IPs with an interactive map in IP Logs & Map. (screenshot-3.png)
+
+1. **Settings Page**: Configure protection settings.
+2. **Dashboard Widget**: Daily blocked attempts and top IPs.
+3. **IP Logs & Map**: Logs and geolocation map of banned IPs.
+4. **Manage IPs**: Ban/unban IPs manually.
+5. **Login Form Feedback**: Visual cue for banned IP attempts.
 
 == Changelog ==
-= 1.0.2 - 2025-03-19 =
-- Enhanced Excluded IPs: Added support for IP/subnet entries with notes in a dynamic table.
 
-= 1.0.1 - 2025-03-19 =
-- Added ban duration dropdown with options from 15 minutes to 1 week.
+= 1.0.3 =
+* Added Login Attempt Counter Dashboard Widget.
+* Added Customizable Block Message for banned IPs.
+* Implemented Visual Feedback on Login Form (shake animation).
+* Added Toggleable Debug Log (detailed logging option).
+* Introduced IP Whitelist Feature to bypass checks.
+* Improved settings interface and documentation.
 
-= 1.0.0 - 2025-03-19 =
-- Initial release with IP tracking, banning, geolocation, and exclusion features.
-- Added MaxMind API key integration with automatic database updates.
-- Implemented admin interface with settings, logs, and interactive map.
-- Enabled auto-updates via GitHub releases.
+= 1.0.2 =
+* Enhanced GeoIP download reliability.
+* Fixed auto-update toggle display.
 
-== Upgrade Notice ==
 = 1.0.1 =
-Updated with a ban duration dropdown—choose from 15 minutes to 1 week for more flexible IP banning!
+* Added exploit scan protection.
+* Optimized database performance.
 
 = 1.0.0 =
-Initial release—install to protect your WordPress site from brute force attacks and exploit scans!
+* Initial release with core brute force and geolocation features.
+
+== Upgrade Notice ==
+
+= 1.0.3 =
+Upgrade for new monitoring tools (dashboard widget), user experience improvements (block message, login feedback), and advanced options (debug log, whitelist).
+
+== Additional Information ==
+
+- **Support**: [TeckGlobal Support](https://teck-global.com/support/)
+- **Source**: [GitHub Repository](https://github.com/teckglobal/teckglobal-brute-force-protect)
+- **License**: GPLv2 or later

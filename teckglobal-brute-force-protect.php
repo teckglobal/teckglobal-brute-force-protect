@@ -1,11 +1,11 @@
-<?php
+<<?php
 /*
  * Plugin Name: TeckGlobal Brute Force Protect
  * Author: TeckGlobal LLC, xAI-Grok
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.2
+ * Version: 1.0.3
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.2');
+define('TECKGLOBAL_BFP_VERSION', '1.0.3');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -146,7 +146,8 @@ function teckglobal_bfp_block_banned_ips_login($user, $username, $password) {
     $ip = teckglobal_bfp_get_client_ip();
     if (teckglobal_bfp_is_ip_banned($ip)) {
         teckglobal_bfp_debug("Blocking banned IP $ip during authentication attempt");
-        wp_die('Your IP has been banned due to suspicious activity. Please contact the site administrator.', 'Access Denied', ['response' => 403]);
+        $block_message = get_option('teckglobal_bfp_block_message', 'Your IP has been banned due to suspicious activity. Please contact the site administrator.');
+        wp_die($block_message, 'Access Denied', ['response' => 403]);
     }
     return $user;
 }
@@ -157,7 +158,8 @@ function teckglobal_bfp_block_banned_ips() {
     $ip = teckglobal_bfp_get_client_ip();
     if (teckglobal_bfp_is_ip_banned($ip) && strpos($_SERVER['REQUEST_URI'], 'wp-login.php') === false) {
         teckglobal_bfp_debug("Blocking banned IP $ip on non-login page");
-        wp_die('Your IP has been banned due to suspicious activity. Please contact the site administrator.', 'Access Denied', ['response' => 403]);
+        $block_message = get_option('teckglobal_bfp_block_message', 'Your IP has been banned due to suspicious activity. Please contact the site administrator.');
+        wp_die($block_message, 'Access Denied', ['response' => 403]);
     }
 }
 
@@ -217,6 +219,13 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
 
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
 
+function teckglobal_bfp_enqueue_login_assets() {
+    wp_enqueue_style('teckglobal-bfp-style', TECKGLOBAL_BFP_URL . 'assets/css/style.css', [], TECKGLOBAL_BFP_VERSION);
+    wp_enqueue_script('teckglobal-bfp-script', TECKGLOBAL_BFP_URL . 'assets/js/script.js', ['jquery'], TECKGLOBAL_BFP_VERSION, true);
+}
+
+add_action('login_enqueue_scripts', 'teckglobal_bfp_enqueue_login_assets');
+
 function teckglobal_bfp_ajax_unban_ip() {
     check_ajax_referer('teckglobal_bfp_unban_nonce', 'nonce');
     if (!current_user_can('manage_options')) {
@@ -269,6 +278,9 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_maxmind_key', '');
     add_option('teckglobal_bfp_remove_data', 0);
     add_option('teckglobal_bfp_enable_logging', 0);
+    add_option('teckglobal_bfp_block_message', 'Your IP has been banned due to suspicious activity. Please contact the site administrator.');
+    add_option('teckglobal_bfp_enable_debug_log', 0);
+    add_option('teckglobal_bfp_whitelist_ips', '');
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -300,7 +312,8 @@ function teckglobal_bfp_deactivate() {
             'teckglobal_bfp_geo_path', 'teckglobal_bfp_max_attempts', 'teckglobal_bfp_ban_time',
             'teckglobal_bfp_auto_ban_invalid', 'teckglobal_bfp_excluded_ips',
             'teckglobal_bfp_exploit_protection', 'teckglobal_bfp_exploit_max_attempts',
-            'teckglobal_bfp_maxmind_key', 'teckglobal_bfp_remove_data', 'teckglobal_bfp_enable_logging'
+            'teckglobal_bfp_maxmind_key', 'teckglobal_bfp_remove_data', 'teckglobal_bfp_enable_logging',
+            'teckglobal_bfp_block_message', 'teckglobal_bfp_enable_debug_log', 'teckglobal_bfp_whitelist_ips'
         ];
         foreach ($options as $option) {
             delete_option($option);
@@ -337,6 +350,9 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
         update_option('teckglobal_bfp_remove_data', isset($_POST['remove_data']) ? 1 : 0);
         update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0);
+        update_option('teckglobal_bfp_block_message', sanitize_text_field($_POST['block_message']));
+        update_option('teckglobal_bfp_enable_debug_log', isset($_POST['enable_debug_log']) ? 1 : 0);
+        update_option('teckglobal_bfp_whitelist_ips', sanitize_textarea_field($_POST['whitelist_ips']));
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
@@ -425,6 +441,18 @@ function teckglobal_bfp_settings_page() {
                     <th>Enable Debug Logging</th>
                     <td><input type="checkbox" name="enable_logging" <?php checked(get_option('teckglobal_bfp_enable_logging', 0), 1); ?> /> <small>(Logs to wp-content/teckglobal-bfp-debug.log)</small></td>
                 </tr>
+                <tr>
+                    <th>Block Message</th>
+                    <td><input type="text" name="block_message" value="<?php echo esc_attr(get_option('teckglobal_bfp_block_message', 'Your IP has been banned due to suspicious activity. Please contact the site administrator.')); ?>" size="50" /></td>
+                </tr>
+                <tr>
+                    <th>Enable Detailed Debug Log</th>
+                    <td><input type="checkbox" name="enable_debug_log" <?php checked(get_option('teckglobal_bfp_enable_debug_log', 0), 1); ?> /> <small>(Logs detailed attempts to wp-content/teckglobal-bfp-detailed.log)</small></td>
+                </tr>
+                <tr>
+                    <th>IP Whitelist</th>
+                    <td><textarea name="whitelist_ips" rows="5" cols="50"><?php echo esc_textarea(get_option('teckglobal_bfp_whitelist_ips', '')); ?></textarea><br><small>Enter one IP per line to bypass brute force checks.</small></td>
+                </tr>
             </table>
             <p class="submit">
                 <input type="submit" name="teckglobal_bfp_settings_save" class="button-primary" value="Save Changes" />
@@ -448,6 +476,37 @@ function teckglobal_bfp_settings_page() {
     </script>
     <?php
 }
+
+function teckglobal_bfp_dashboard_widget() {
+    wp_add_dashboard_widget(
+        'teckglobal_bfp_dashboard_widget',
+        'Brute Force Protection Stats',
+        'teckglobal_bfp_dashboard_widget_display'
+    );
+}
+
+function teckglobal_bfp_dashboard_widget_display() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
+    $today = current_time('Y-m-d');
+    $blocked_today = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM $table_name WHERE banned = 1 AND DATE(timestamp) = %s",
+        $today
+    ));
+    $top_blocked = $wpdb->get_results("SELECT ip, attempts FROM $table_name WHERE banned = 1 ORDER BY attempts DESC LIMIT 5");
+    ?>
+    <p><strong>Blocked Attempts Today:</strong> <?php echo esc_html($blocked_today); ?></p>
+    <p><strong>Top Blocked IPs:</strong></p>
+    <ul>
+        <?php foreach ($top_blocked as $ip) : ?>
+            <li><?php echo esc_html($ip->ip) . ' (' . esc_html($ip->attempts) . ' attempts)'; ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <p><a href="<?php echo admin_url('admin.php?page=teckglobal-bfp'); ?>">View Settings</a></p>
+    <?php
+}
+
+add_action('wp_dashboard_setup', 'teckglobal_bfp_dashboard_widget');
 
 function teckglobal_bfp_auto_update_toggle($enabled, $plugin) {
     if (isset($plugin->plugin) && $plugin->plugin === 'teckglobal-brute-force-protect/teckglobal-brute-force-protect.php') {
