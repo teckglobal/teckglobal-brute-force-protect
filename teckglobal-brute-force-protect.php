@@ -319,7 +319,7 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_max_attempts', absint($_POST['max_attempts']));
         update_option('teckglobal_bfp_ban_time', sanitize_text_field($_POST['ban_time']));
         update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['auto_ban_invalid']) ? 1 : 0);
-        
+
         $excluded_ips = [];
         if (isset($_POST['excluded_ip']) && is_array($_POST['excluded_ip'])) {
             foreach ($_POST['excluded_ip'] as $index => $ip) {
@@ -331,7 +331,7 @@ function teckglobal_bfp_settings_page() {
             }
         }
         update_option('teckglobal_bfp_excluded_ips', $excluded_ips);
-        
+
         update_option('teckglobal_bfp_exploit_protection', isset($_POST['exploit_protection']) ? 1 : 0);
         update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));

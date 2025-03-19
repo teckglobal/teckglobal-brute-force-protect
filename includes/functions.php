@@ -101,7 +101,7 @@ function teckglobal_bfp_ban_ip(string $ip, string $reason = 'manual'): void {
     global $wpdb;
     $table_name = $wpdb->prefix . 'teckglobal_bfp_logs';
     $ban_time = get_option('teckglobal_bfp_ban_time', '60-minutes');
-    
+
     list($value, $unit) = explode('-', $ban_time);
     $value = (int) $value;
     $interval = match ($unit) {
