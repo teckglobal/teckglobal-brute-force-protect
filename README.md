@@ -55,11 +55,11 @@ If you love this free tool, please consider a donation at [TeckGlobal’s Buy Me
 ## Screenshots
 
 1. **Settings Page**: Configure max attempts, ban duration, and exclusions.
-   ![Settings Page](https://teck-global.com/wp-content/uploads/2025/03/screenshot1.webp)
+   ![Settings Page](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot1.webp)
 2. **Manage IPs**: Ban or unban IPs manually.
-   ![Manage IPs](https://teck-global.com/wp-content/uploads/2025/03/screenshot2.webp)
+   ![Manage IPs](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot2.webp)
 3. **IP Logs & Map**: View logs and banned IP locations on a map.
-   ![IP Logs & Map](https://teck-global.com/wp-content/uploads/2025/03/screenshot3.webp)
+   ![IP Logs & Map](https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot3.webp)
 
 ## Development
 
@@ -88,16 +88,3 @@ TeckGlobal LLC: Core development and support.
 
 xAI-Grok: Co-development and debugging.
 Built with passion for the WordPress community. Stay safe out there!
-== Screenshots ==
-
-1. **Settings Page**: Configure max attempts, ban duration, and excluded IPs.
-
-<img src="https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot1.webp" alt="Settings Main Page" style="width:521px;height:771px;">
-
-2. **Manage IPs**: Add or Remove IP to the Ban List.
-
-<img src="https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot2.webp" alt="Settings Main Page" style="width:324px;height:296px;">
-
-3. **IP Logs & Map**: Logs of IP's banned with an interactive map showing banned IP locations.
-
-<img src="https://github.com/teckglobal/teckglobal-brute-force-protect/blob/main/assets/css/images/screenshot3.webp" alt="Settings Main Page" style="width:700px;height:296px;">
