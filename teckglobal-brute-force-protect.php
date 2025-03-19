@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.1
+ * Version: 1.0.2
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -29,7 +29,7 @@ define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb')
 require_once TECKGLOBAL_BFP_PATH . 'includes/functions.php';
 
 function teckglobal_bfp_debug(string $message): void {
-    if (get_option('teckglobal_bfp_enable_logging', 0)) {
+    if (get_option('teckglobal_bfp_enable_logging', 0) && (is_admin() || defined('DOING_CRON') || defined('DOING_AJAX'))) {
         $log_file = WP_CONTENT_DIR . '/teckglobal-bfp-debug.log';
         $timestamp = current_time('Y-m-d H:i:s');
         file_put_contents($log_file, "[$timestamp] $message\n", FILE_APPEND);
@@ -37,8 +37,10 @@ function teckglobal_bfp_debug(string $message): void {
 }
 
 global $wpdb;
-teckglobal_bfp_debug("Database table prefix: " . $wpdb->prefix);
-teckglobal_bfp_debug("Checking auto_update_plugins option: " . json_encode(get_option('auto_update_plugins', 'Not set')));
+if (is_admin() || defined('DOING_CRON') || defined('DOING_AJAX')) {
+    teckglobal_bfp_debug("Database table prefix: " . $wpdb->prefix);
+    teckglobal_bfp_debug("Checking auto_update_plugins option: " . json_encode(get_option('auto_update_plugins', 'Not set')));
+}
 
 function teckglobal_bfp_get_client_ip(): string {
     $ip = '0.0.0.0';
@@ -328,7 +330,7 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_exploit_max_attempts', 3);
     add_option('teckglobal_bfp_maxmind_key', '');
     add_option('teckglobal_bfp_remove_data', 0);
-    add_option('teckglobal_bfp_enable_logging', 0); // New option
+    add_option('teckglobal_bfp_enable_logging', 0);
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -371,7 +373,7 @@ function teckglobal_bfp_deactivate() {
             'teckglobal_bfp_exploit_max_attempts',
             'teckglobal_bfp_maxmind_key',
             'teckglobal_bfp_remove_data',
-            'teckglobal_bfp_enable_logging' // Added to cleanup
+            'teckglobal_bfp_enable_logging'
         ];
         foreach ($options as $option) {
             delete_option($option);
@@ -395,7 +397,7 @@ function teckglobal_bfp_settings_page() {
         update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
         update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
         update_option('teckglobal_bfp_remove_data', isset($_POST['remove_data']) ? 1 : 0);
-        update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0); // New option
+        update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0);
         echo '<div class="updated"><p>Settings saved.</p></div>';
     }
 
