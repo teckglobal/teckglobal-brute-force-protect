@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.0.3
+ * Version: 1.0.4
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.0.3');
+define('TECKGLOBAL_BFP_VERSION', '1.0.4');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -442,9 +442,13 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
     }
 
     $plugin_dir = WP_PLUGIN_DIR . '/teckglobal-brute-force-protect';
-    $temp_dir = $upgrader->new_plugin_data['destination'] ?? '';
+    $temp_dir = trailingslashit(dirname($upgrader->new_plugin_data['destination'] ?? '')) . 'teckglobal-teckglobal-brute-force-protect-' . substr(md5(time()), 0, 7);
+
+    teckglobal_bfp_debug("Update detected. Expected plugin dir: $plugin_dir");
+    teckglobal_bfp_debug("Checking temp dir: $temp_dir");
 
     if ($temp_dir && file_exists($temp_dir) && $temp_dir !== $plugin_dir) {
+        teckglobal_bfp_debug("Temp dir exists: $temp_dir");
         if (file_exists($plugin_dir)) {
             teckglobal_bfp_remove_dir($plugin_dir);
             teckglobal_bfp_debug("Removed old plugin directory: $plugin_dir");
@@ -452,13 +456,16 @@ function teckglobal_bfp_fix_update_folder($upgrader, $data) {
         if (rename($temp_dir, $plugin_dir)) {
             teckglobal_bfp_debug("Renamed updated folder from $temp_dir to $plugin_dir");
             activate_plugin('teckglobal-brute-force-protect/teckglobal-brute-force-protect.php');
+            teckglobal_bfp_debug("Plugin reactivated successfully");
         } else {
-            teckglobal_bfp_debug("Failed to rename $temp_dir to $plugin_dir");
+            teckglobal_bfp_debug("Failed to rename $temp_dir to $plugin_dir. Check permissions or path.");
         }
+    } else {
+        teckglobal_bfp_debug("Temp dir not found or already correct: $temp_dir");
     }
 }
 
-add_action('upgrader_process_complete', 'teckglobal_bfp_fix_update_folder', 10, 2);
+add_action('upgrader_process_complete', 'teckglobal_bfp_fix_update_folder', 20, 2); // Bumped priority
 
 function teckglobal_bfp_check_github_updates($transient) {
     if (empty($transient->checked)) {

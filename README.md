@@ -6,7 +6,7 @@
 - **Donate Link**: [https://teck-global.com/buy-me-a-coffee/](https://teck-global.com/buy-me-a-coffee/)
 - **Requires at Least**: 5.0
 - **Tested Up To**: 6.7
-- **Stable Tag**: 1.0.3
+- **Stable Tag**: 1.0.4
 - **Requires PHP**: 7.4 or later
 - **License**: GPLv2 or later
 - **License URI**: [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -73,6 +73,9 @@ cd teckglobal-brute-force-protect
 composer install
 
 Changelog
+1.0.4 - 2025-03-19
+Fixed Wordpress Updating folder rename errors.
+
 1.0.3 - 2025-03-19
 Fixed debug logs to make less chatty
 
