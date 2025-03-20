@@ -357,53 +357,80 @@ function teckglobal_bfp_deactivate() {
 }
 register_deactivation_hook(__FILE__, 'teckglobal_bfp_deactivate');
 
+function teckglobal_bfp_handle_settings_save() {
+    if (!isset($_POST['submit']) || !isset($_POST['teckglobal_bfp_nonce']) || !current_user_can('manage_options')) {
+        return;
+    }
+
+    // Check if we're on the correct page
+    if (!isset($_GET['page']) || $_GET['page'] !== 'teckglobal-bfp') {
+        return;
+    }
+
+    teckglobal_bfp_debug("Nonce received: " . $_POST['teckglobal_bfp_nonce']);
+    if (!wp_verify_nonce($_POST['teckglobal_bfp_nonce'], 'teckglobal_bfp_save_settings')) {
+        teckglobal_bfp_debug("Nonce verification failed. Expected action: teckglobal_bfp_save_settings, Received nonce: " . $_POST['teckglobal_bfp_nonce']);
+        wp_die('Nonce verification failed. Please try again.');
+    }
+
+    update_option('teckglobal_bfp_max_attempts', absint($_POST['max_attempts']));
+    update_option('teckglobal_bfp_ban_time', sanitize_text_field($_POST['ban_time']));
+    update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['auto_ban_invalid']) ? 1 : 0);
+
+    $excluded_ips = [];
+    if (isset($_POST['excluded_ip']) && is_array($_POST['excluded_ip'])) {
+        foreach ($_POST['excluded_ip'] as $index => $ip) {
+            $ip = sanitize_text_field($ip);
+            $note = sanitize_text_field($_POST['excluded_note'][$index] ?? '');
+            if (!empty($ip) && (filter_var($ip, FILTER_VALIDATE_IP) || preg_match('/^\d+\.\d+\.\d+\.\d+\/\d+$/', $ip))) {
+                $excluded_ips[] = ['ip' => $ip, 'note' => $note];
+            }
+        }
+    }
+    update_option('teckglobal_bfp_excluded_ips', $excluded_ips);
+
+    update_option('teckglobal_bfp_exploit_protection', isset($_POST['exploit_protection']) ? 1 : 0);
+    update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
+    update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
+    update_option('teckglobal_bfp_remove_data', isset($_POST['remove_data']) ? 1 : 0);
+    update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0);
+    update_option('teckglobal_bfp_block_message', sanitize_text_field($_POST['block_message']));
+    update_option('teckglobal_bfp_enable_debug_log', isset($_POST['enable_debug_log']) ? 1 : 0);
+    update_option('teckglobal_bfp_whitelist_ips', sanitize_textarea_field($_POST['whitelist_ips']));
+    update_option('teckglobal_bfp_enable_notifications', isset($_POST['enable_notifications']) ? 1 : 0);
+    update_option('teckglobal_bfp_notification_email', sanitize_email($_POST['notification_email']));
+    update_option('teckglobal_bfp_enable_captcha', isset($_POST['enable_captcha']) ? 1 : 0);
+    update_option('teckglobal_bfp_recaptcha_site_key', sanitize_text_field($_POST['recaptcha_site_key']));
+    update_option('teckglobal_bfp_recaptcha_secret_key', sanitize_text_field($_POST['recaptcha_secret_key']));
+    update_option('teckglobal_bfp_enable_rate_limit', isset($_POST['enable_rate_limit']) ? 1 : 0);
+    update_option('teckglobal_bfp_rate_limit_attempts', absint($_POST['rate_limit_attempts']));
+    update_option('teckglobal_bfp_rate_limit_interval', absint($_POST['rate_limit_interval']));
+    update_option('teckglobal_bfp_enable_threat_feed', isset($_POST['enable_threat_feed']) ? 1 : 0);
+    update_option('teckglobal_bfp_abuseipdb_key', sanitize_text_field($_POST['abuseipdb_key']));
+
+    teckglobal_bfp_debug("Settings saved, preparing redirect");
+
+    $redirect_url = add_query_arg(['page' => 'teckglobal-bfp', 'updated' => 'true'], admin_url('admin.php'));
+    if (!headers_sent()) {
+        wp_redirect($redirect_url);
+        exit;
+    } else {
+        teckglobal_bfp_debug("Headers already sent, falling back to JavaScript redirect");
+        echo "<script>window.location.href = '" . esc_url_raw($redirect_url) . "';</script>";
+        exit;
+    }
+}
+add_action('admin_init', 'teckglobal_bfp_handle_settings_save');
+
 function teckglobal_bfp_settings_page() {
     if (!current_user_can('manage_options')) {
         wp_die('Unauthorized access');
     }
 
-    if (isset($_POST['teckglobal_bfp_settings_save']) && check_admin_referer('teckglobal_bfp_settings')) {
-        update_option('teckglobal_bfp_max_attempts', absint($_POST['max_attempts']));
-        update_option('teckglobal_bfp_ban_time', sanitize_text_field($_POST['ban_time']));
-        update_option('teckglobal_bfp_auto_ban_invalid', isset($_POST['auto_ban_invalid']) ? 1 : 0);
-
-        $excluded_ips = [];
-        if (isset($_POST['excluded_ip']) && is_array($_POST['excluded_ip'])) {
-            foreach ($_POST['excluded_ip'] as $index => $ip) {
-                $ip = sanitize_text_field($ip);
-                $note = sanitize_text_field($_POST['excluded_note'][$index] ?? '');
-                if (!empty($ip) && (filter_var($ip, FILTER_VALIDATE_IP) || preg_match('/^\d+\.\d+\.\d+\.\d+\/\d+$/', $ip))) {
-                    $excluded_ips[] = ['ip' => $ip, 'note' => $note];
-                }
-            }
-        }
-        update_option('teckglobal_bfp_excluded_ips', $excluded_ips);
-
-        update_option('teckglobal_bfp_exploit_protection', isset($_POST['exploit_protection']) ? 1 : 0);
-        update_option('teckglobal_bfp_exploit_max_attempts', absint($_POST['exploit_max_attempts']));
-        update_option('teckglobal_bfp_maxmind_key', sanitize_text_field($_POST['maxmind_key']));
-        update_option('teckglobal_bfp_remove_data', isset($_POST['remove_data']) ? 1 : 0);
-        update_option('teckglobal_bfp_enable_logging', isset($_POST['enable_logging']) ? 1 : 0);
-        update_option('teckglobal_bfp_block_message', sanitize_text_field($_POST['block_message']));
-        update_option('teckglobal_bfp_enable_debug_log', isset($_POST['enable_debug_log']) ? 1 : 0);
-        update_option('teckglobal_bfp_whitelist_ips', sanitize_textarea_field($_POST['whitelist_ips']));
-        update_option('teckglobal_bfp_enable_notifications', isset($_POST['enable_notifications']) ? 1 : 0);
-        update_option('teckglobal_bfp_notification_email', sanitize_email($_POST['notification_email']));
-        update_option('teckglobal_bfp_enable_captcha', isset($_POST['enable_captcha']) ? 1 : 0);
-        update_option('teckglobal_bfp_recaptcha_site_key', sanitize_text_field($_POST['recaptcha_site_key']));
-        update_option('teckglobal_bfp_recaptcha_secret_key', sanitize_text_field($_POST['recaptcha_secret_key']));
-        update_option('teckglobal_bfp_enable_rate_limit', isset($_POST['enable_rate_limit']) ? 1 : 0);
-        update_option('teckglobal_bfp_rate_limit_attempts', absint($_POST['rate_limit_attempts']));
-        update_option('teckglobal_bfp_rate_limit_interval', absint($_POST['rate_limit_interval']));
-        update_option('teckglobal_bfp_enable_threat_feed', isset($_POST['enable_threat_feed']) ? 1 : 0);
-        update_option('teckglobal_bfp_abuseipdb_key', sanitize_text_field($_POST['abuseipdb_key']));
-        echo '<div class="updated"><p>Settings saved.</p></div>';
-    }
-
+    // Handle export and import (these don't redirect, so no buffering needed here)
     if (isset($_POST['teckglobal_bfp_export_settings']) && check_admin_referer('teckglobal_bfp_export')) {
         teckglobal_bfp_export_settings();
     }
-
     if (isset($_FILES['import_file']) && isset($_POST['teckglobal_bfp_import_settings']) && check_admin_referer('teckglobal_bfp_import')) {
         teckglobal_bfp_import_settings();
     }
@@ -412,8 +439,11 @@ function teckglobal_bfp_settings_page() {
     ?>
     <div class="wrap">
         <h1>TeckGlobal Brute Force Protect Settings</h1>
+        <?php if (isset($_GET['updated']) && $_GET['updated'] === 'true') : ?>
+            <div class="updated"><p>Settings saved.</p></div>
+        <?php endif; ?>
         <form method="post" action="" enctype="multipart/form-data">
-            <?php wp_nonce_field('teckglobal_bfp_settings'); ?>
+            <?php wp_nonce_field('teckglobal_bfp_save_settings', 'teckglobal_bfp_nonce'); ?>
             <h2>General Settings</h2>
             <table class="form-table">
                 <tr>
@@ -565,25 +595,10 @@ function teckglobal_bfp_settings_page() {
             </table>
 
             <p class="submit">
-                <input type="submit" name="teckglobal_bfp_settings_save" class="button-primary" value="Save Changes" />
+                <input type="submit" name="submit" class="button-primary" value="Save Changes" />
             </p>
         </form>
     </div>
-    <script>
-    jQuery(document).ready(function($) {
-        $('#add-excluded-ip').click(function() {
-            var row = '<tr>' +
-                '<td><input type="text" name="excluded_ip[]" value="" /></td>' +
-                '<td><input type="text" name="excluded_note[]" value="" /></td>' +
-                '<td><button type="button" class="button remove-row">Remove</button></td>' +
-                '</tr>';
-            $('#excluded-ips-rows').append(row);
-        });
-        $(document).on('click', '.remove-row', function() {
-            $(this).closest('tr').remove();
-        });
-    });
-    </script>
     <?php
 }
 
