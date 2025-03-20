@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.1
+ * Version: 1.1.2
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.1.1'); // Updated to 1.1.1
+define('TECKGLOBAL_BFP_VERSION', '1.1.2'); // Updated to 1.1.2
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -282,7 +282,7 @@ function teckglobal_bfp_activate() {
         longitude DECIMAL(10,7) DEFAULT NULL,
         scan_exploit TINYINT(1) NOT NULL DEFAULT 0,
         brute_force TINYINT(1) NOT NULL DEFAULT 0,
-        manualව_menu_ban TINYINT(1) NOT NULL DEFAULT 0,
+        manual_ban TINYINT(1) NOT NULL DEFAULT 0,
         user_agent VARCHAR(255) DEFAULT NULL,
         PRIMARY KEY (id),
         UNIQUE KEY ip (ip)
@@ -312,9 +312,9 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_enable_rate_limit', 0);
     add_option('teckglobal_bfp_rate_limit_attempts', 3);
     add_option('teckglobal_bfp_rate_limit_interval', 60);
-    add_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]); // New: Multi-feed support
+    add_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]);
     add_option('teckglobal_bfp_abuseipdb_key', '');
-    add_option('teckglobal_bfp_project_honeypot_key', ''); // New: Project Honeypot key
+    add_option('teckglobal_bfp_project_honeypot_key', '');
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -409,9 +409,9 @@ function teckglobal_bfp_handle_settings_save() {
         'abuseipdb' => isset($_POST['threat_feeds']['abuseipdb']) ? 1 : 0,
         'project_honeypot' => isset($_POST['threat_feeds']['project_honeypot']) ? 1 : 0
     ];
-    update_option('teckglobal_bfp_threat_feeds', $threat_feeds); // New: Save selected feeds
+    update_option('teckglobal_bfp_threat_feeds', $threat_feeds);
     update_option('teckglobal_bfp_abuseipdb_key', sanitize_text_field($_POST['abuseipdb_key']));
-    update_option('teckglobal_bfp_project_honeypot_key', sanitize_text_field($_POST['project_honeypot_key'])); // New: Save Project Honeypot key
+    update_option('teckglobal_bfp_project_honeypot_key', sanitize_text_field($_POST['project_honeypot_key']));
 
     teckglobal_bfp_debug("Settings saved, preparing redirect");
 
@@ -440,7 +440,7 @@ function teckglobal_bfp_settings_page() {
     }
 
     $excluded_ips = get_option('teckglobal_bfp_excluded_ips', []);
-    $threat_feeds = get_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]); // New: Load selected feeds
+    $threat_feeds = get_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]);
     ?>
     <div class="wrap">
         <h1>TeckGlobal Brute Force Protect Settings</h1>
@@ -519,7 +519,10 @@ function teckglobal_bfp_settings_page() {
                 </tr>
                 <tr>
                     <th>MaxMind License Key</th>
-                    <td><input type="text" name="maxmind_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_maxmind_key', '')); ?>" size="50" /></td>
+                    <td>
+                        <input type="text" name="maxmind_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_maxmind_key', '')); ?>" size="50" />
+                        <p><small>Enter your MaxMind License Key for geolocation data. Get a free key at <a href="https://www.maxmind.com/en/geolite2/signup" target="_blank">MaxMind GeoLite2 Signup</a>.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>Remove Data on Deactivation</th>
@@ -555,15 +558,24 @@ function teckglobal_bfp_settings_page() {
                 </tr>
                 <tr>
                     <th>Enable CAPTCHA</th>
-                    <td><input type="checkbox" name="enable_captcha" <?php checked(get_option('teckglobal_bfp_enable_captcha', 0), 1); ?> /></td>
+                    <td>
+                        <input type="checkbox" name="enable_captcha" <?php checked(get_option('teckglobal_bfp_enable_captcha', 0), 1); ?> />
+                        <p><small>Adds Google reCAPTCHA v2 to the login form to block bots. Requires keys below. Get them at <a href="https://www.google.com/recaptcha" target="_blank">Google reCAPTCHA</a>.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>reCAPTCHA Site Key</th>
-                    <td><input type="text" name="recaptcha_site_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_site_key', '')); ?>" size="50" /></td>
+                    <td>
+                        <input type="text" name="recaptcha_site_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_site_key', '')); ?>" size="50" />
+                        <p><small>Your public reCAPTCHA key. Obtain it from <a href="https://www.google.com/recaptcha" target="_blank">Google reCAPTCHA</a> after registering your site.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>reCAPTCHA Secret Key</th>
-                    <td><input type="text" name="recaptcha_secret_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_secret_key', '')); ?>" size="50" /></td>
+                    <td>
+                        <input type="text" name="recaptcha_secret_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_recaptcha_secret_key', '')); ?>" size="50" />
+                        <p><small>Your private reCAPTCHA key. Find it at <a href="https://www.google.com/recaptcha" target="_blank">Google reCAPTCHA</a> in your admin console.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>Enable Rate Limiting</th>
@@ -582,16 +594,20 @@ function teckglobal_bfp_settings_page() {
                     <td>
                         <label><input type="checkbox" name="threat_feeds[abuseipdb]" <?php checked($threat_feeds['abuseipdb'], 1); ?> /> AbuseIPDB</label><br>
                         <label><input type="checkbox" name="threat_feeds[project_honeypot]" <?php checked($threat_feeds['project_honeypot'], 1); ?> /> Project Honeypot</label>
-                        <p><small>Select one or more threat feeds to check IPs against.</small></p>
+                        <p><small>Select one or more threat feeds to check IPs against. Requires API keys below.</small></p>
                     </td>
                 </tr>
                 <tr>
                     <th>AbuseIPDB API Key</th>
-                    <td><input type="text" name="abuseipdb_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_abuseipdb_key', '')); ?>" size="50" /></td>
+                    <td>
+                        <input type="text" name="abuseipdb_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_abuseipdb_key', '')); ?>" size="50" />
+                        <p><small>Get your free API key from <a href="https://www.abuseipdb.com/register" target="_blank">AbuseIPDB Register</a> to enable threat detection.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>Project Honeypot API Key</th>
-                    <td><input type="text" name="project_honeypot_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_project_honeypot_key', '')); ?>" size="50" />
+                    <td>
+                        <input type="text" name="project_honeypot_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_project_honeypot_key', '')); ?>" size="50" />
                         <p><small>Get your key from <a href="https://www.projecthoneypot.org/httpbl_configure.php" target="_blank">Project Honeypot</a>.</small></p>
                     </td>
                 </tr>
@@ -822,17 +838,19 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'last_updated' => $release['published_at'],
         'homepage' => 'https://teck-global.com/wordpress-plugins/',
         'sections' => [
-            'description' => '<p>A WordPress plugin to prevent brute force login attacks and exploit scans, with features like IP management, geolocation, notifications, CAPTCHA, rate limiting, and threat feeds.</p><p>Support us at <a href="https://teck-global.com/buy-me-a-coffee/">Buy Me a Coffee</a>.</p>',
-            'installation' => '<ol><li>Upload via Plugins > Add New > Upload Plugin.</li><li>Activate.</li><li>Configure in TeckGlobal BFP > Settings.</li><li>Monitor via dashboard or IP Logs & Map.</li></ol>',
-            'changelog' => '<h4>1.1.1</h4><ul><li>Enhanced threat feed support with multiple sources (AbuseIPDB, Project Honeypot) and a selector.</li></ul><h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings.</li></ul><h4>1.0.3</h4><ul><li>Dashboard widget, block message, login feedback, debug logs, whitelist.</li></ul>',
+            'description' => '<p>A WordPress plugin to prevent brute force login attacks and exploit scans, featuring IP management, geolocation, notifications, CAPTCHA, rate limiting, and multiple threat feeds (AbuseIPDB, Project Honeypot).</p><p><strong>Support us:</strong> <a href="https://teck-global.com/buy-me-a-coffee/">Buy Me a Coffee</a></p>',
+            'installation' => '<ol><li>Upload via Plugins > Add New > Upload Plugin.</li><li>Activate the plugin.</li><li>Configure settings at TeckGlobal BFP > Settings.</li><li>(Optional) Add MaxMind, reCAPTCHA, or AbuseIPDB keys.</li></ol>',
+            'features' => '<ul><li>Blocks IPs after excessive login attempts</li><li>Detects exploit scans</li><li>Geolocation with MaxMind GeoLite2</li><li>Manual IP ban/unban</li><li>Dashboard stats</li><li>Custom block messages</li><li>Visual login feedback</li><li>Debug logs</li><li>Notifications</li><li>CAPTCHA</li><li>Rate limiting</li><li>Threat feeds</li><li>User agent logging</li><li>Settings export/import</li></ul>',
+            'changelog' => '<h4>1.1.2</h4><ul><li>Improved settings page with links and descriptions</li><li>Enhanced "View Details" popup</li></ul><h4>1.1.1</h4><ul><li>Added multiple threat feed support</li></ul><h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings</li></ul>',
+            'screenshots' => '<ol><li><strong>Settings Page</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot1.webp" alt="Settings Page" style="max-width:100%;"></li><li><strong>IP Logs & Map</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot2.webp" alt="IP Logs & Map" style="max-width:100%;"></li><li><strong>Dashboard Widget</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot3.webp" alt="Dashboard Widget" style="max-width:100%;"></li></ol>',
         ],
         'banners' => [
-            'low' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-772x250.jpg',
-            'high' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-1544x500.jpg'
+            'low' => TECKGLOBAL_BFP_URL . 'assets/css/images/banner-772x250.jpg',
+            'high' => TECKGLOBAL_BFP_URL . 'assets/css/images/banner-1544x500.jpg'
         ],
         'icons' => [
-            '1x' => 'assets/css/images/teckglobal-bfp-icon-112x128.webp',
-            '2x' => 'assets/css/images/teckglobal-bfp-icon-215x250.webp'
+            '1x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-128x128.webp',
+            '2x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-256x256.webp'
         ],
         'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];

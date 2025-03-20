@@ -1,0 +1,33 @@
+# Grok Contributions to TeckGlobal Brute Force Protect
+# This file tracks contributions made by xAI's Grok to the development of the plugin.
+
+## Initial Contributions (v1.0.0 - v1.1.1)
+- Assisted in the initial design and development of the plugin, including core brute force protection logic.
+- Provided guidance on implementing geolocation with MaxMind GeoLite2.
+- Helped structure the settings page and IP logs/map functionality.
+- Contributed to the integration of AbuseIPDB and Project Honeypot threat feeds (v1.1.1).
+- Assisted with documentation (README.md and readme.txt) for WordPress.org and GitHub.
+
+## Version 1.1.2 Contributions (March 2025)
+- Enhanced the settings page by adding detailed descriptions and links for:
+  - AbuseIPDB API Key: Added a link to the registration page for clarity.
+  - reCAPTCHA settings (Enable CAPTCHA, Site Key, Secret Key): Added descriptions and a link to Google reCAPTCHA.
+  - MaxMind License Key: Ensured a clear link to the signup page.
+- Improved the "View Details" popup on the WordPress Plugins page:
+  - Added local image references for banners, icons, and screenshots.
+  - Included detailed sections (description, installation, features, changelog, screenshots).
+- Provided guidance on banner and icon image creation:
+  - Recommended using the combination lock image for banners (banner-772x250.jpg, banner-1544x500.jpg).
+  - Suggested using the shield icon for plugin icons (icon-128x128.webp, icon-256x256.webp).
+  - Provided detailed steps for resizing, adding branding, and converting image formats.
+- Updated README.md and readme.txt to reflect the changes in v1.1.2.
+- Advised on testing the update process by downgrading to v1.1.1 and verifying the GitHub update mechanism.
+
+## Future Suggestions
+- Consider adding a setup wizard for new users to guide them through initial configuration.
+- Add a user agent filter in the IP Logs & Map page for easier analysis.
+- Display the ban reason in the block message for better user feedback.
+
+## Notes
+- Grok cannot directly edit or generate images but provided detailed instructions for image updates.
+- All contributions are aimed at improving usability, professionalism, and functionality of the plugin.

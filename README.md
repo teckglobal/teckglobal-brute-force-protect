@@ -4,7 +4,7 @@ A WordPress plugin by TeckGlobal LLC and xAI's Grok to protect your site from br
 
 - **Plugin URI**: [https://teck-global.com/wordpress-plugins/](https://teck-global.com/wordpress-plugins/)
 - **Author**: TeckGlobal LLC, xAI-Grok
-- **Version**: 1.1.1
+- **Version**: 1.1.2
 - **License**: GPL-2.0+
 - **Requires**: WordPress 5.0+, PHP 7.4+
 - **Tested Up To**: WordPress 6.7.2
@@ -210,6 +210,10 @@ Configure all options under **TeckGlobal BFP > Settings**. Here’s what each se
 - Visit [TeckGlobal Support](https://teck-global.com/support/) or [GitHub Issues](https://github.com/teckglobal/teckglobal-brute-force-protect/issues).
 
 ## Changelog
+
+### 1.1.2
+- Improved settings page with detailed descriptions and links for AbuseIPDB, reCAPTCHA, and MaxMind.
+- Enhanced "View Details" popup on the WordPress Plugins page with local images and more info.
 
 ### 1.1.1
 - Enhanced threat intelligence with multiple feed support (AbuseIPDB and Project Honeypot) and a selector in settings.

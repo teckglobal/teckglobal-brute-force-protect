@@ -4,7 +4,7 @@ Donate link: https://teck-global.com/buy-me-a-coffee/
 Tags: security, brute force, login protection, ip blocking, geolocation
 Requires at least: 5.0
 Tested up to: 6.7.2
-Stable tag: 1.1.0
+Stable tag: 1.1.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
@@ -62,7 +62,7 @@ Configure options under `TeckGlobal BFP > Settings`. Here’s what each setting 
   - Purpose: Excludes IPs/subnets from protection.
   - Default: Empty
   - Adjust: Add IPs (e.g., `192.168.1.1`) or subnets (e.g., `10.0.0.0/24`) with notes.
-  - Verify: Add a test IP, exceed attempts; it shouldn’t be banned in `IP Logs & Map`.
+  - Verify: Add a test IP, exceed attempts; it shouldn’t be banned in `IP Logs & Map`).
 
 - **Enable Exploit Protection**
   - Purpose: Bans IPs scanning for vulnerabilities.
@@ -169,13 +169,13 @@ Configure options under `TeckGlobal BFP > Settings`. Here’s what each setting 
   - Verify: Add a key, enable threat feed, test with a reported IP; check `IP Logs & Map`.
 
 - **Project Honeypot API Key**
-  - Purpose**: Queries Project Honeypot via HTTP:BL for threat data (bans IPs with a threat score > 0).
-  - Default**: Empty
-  - Adjust**: 
+  - Purpose: Queries Project Honeypot via HTTP:BL for threat data (bans IPs with a threat score > 0).
+  - Default: Empty
+  - Adjust: 
     1. Register at [Project Honeypot](https://www.projecthoneypot.org/httpbl_configure.php).
     2. Sign up, activate HTTP:BL, generate an API key, copy it.
     3. Paste it here.
-  - Verify**: Add a key, enable Project Honeypot feed, test with a flagged IP—check `IP Logs & Map` for a "threat_feed" ban.
+  - Verify: Add a key, enable Project Honeypot feed, test with a flagged IP—check `IP Logs & Map` for a "threat_feed" ban.
 
 = Export/Import Settings =
 - Purpose: Backup or restore settings.
@@ -221,6 +221,10 @@ It uses AbuseIPDB to auto-ban high-risk IPs (requires API key).
 
 == Changelog ==
 
+= 1.1.2 =
+* Improved settings page with links and descriptions for AbuseIPDB, reCAPTCHA, and MaxMind keys.
+* Enhanced "View Details" popup with local images and detailed sections.
+
 = 1.1.1 =
 * Enhanced threat intelligence with multiple feed support (AbuseIPDB and Project Honeypot) and a selector in settings.
 
@@ -252,6 +256,9 @@ It uses AbuseIPDB to auto-ban high-risk IPs (requires API key).
 * Initial release with brute force and geolocation.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Upgrade for improved settings page usability and a more detailed "View Details" popup.
 
 = 1.1.0 =
 Upgrade for notifications, CAPTCHA, rate limiting, threat intelligence, user agent logging, and settings management.
