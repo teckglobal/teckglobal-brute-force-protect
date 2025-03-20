@@ -9,16 +9,25 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
-Protect your WordPress site from brute force login attacks and exploit scans with IP management and geolocation features.
+A powerful security plugin to protect your WordPress site from brute force login attacks, exploit scans, and more, featuring IP management, geolocation, and threat intelligence.
 
 == Description ==
 
-TeckGlobal Brute Force Protect, developed by TeckGlobal LLC with xAI's Grok, is a robust security plugin that defends your WordPress site against brute force login attempts and exploit scans. It tracks failed logins, bans offending IPs, and logs details with optional geolocation. Key features include a dashboard widget, customizable block messages, visual login feedback, debug logs, IP whitelisting, real-time notifications, CAPTCHA integration, rate limiting, threat intelligence, user agent logging, and settings export/import. Support this free plugin at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
+**TeckGlobal Brute Force Protect** is an advanced, free, and open-source WordPress security plugin crafted by TeckGlobal LLC and xAI's Grok. It safeguards your site against brute force login attacks and exploit scans by monitoring and blocking suspicious IPs. With features like real-time geolocation via MaxMind GeoLite2, integration with threat feeds (AbuseIPDB and Project Honeypot), a dashboard widget, customizable block messages, visual login feedback, detailed debug logs, IP whitelisting, email notifications, Google reCAPTCHA v2, rate limiting, user agent logging, and settings export/import, it offers comprehensive protection tailored for both novice and expert users.
+
+This plugin is ideal for anyone looking to secure their WordPress site without complexity. It’s lightweight, configurable, and community-driven—donations at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/) help us keep it free and growing.
+
+**Key Benefits:**
+- **Proactive Defense**: Blocks IPs after excessive login attempts or exploit scans.
+- **Global Insights**: Maps attack origins with optional geolocation.
+- **Threat Intelligence**: Leverages AbuseIPDB and Project Honeypot for preemptive bans.
+- **User-Friendly**: Easy setup with powerful monitoring tools.
+- **Community Support**: Free to use, with donations fueling further development.
 
 == Installation ==
 
 1. **Upload the Plugin**:
-   - Download the plugin ZIP from [GitHub Releases](https://github.com/teckglobal/teckglobal-brute-force-protect/releases) or WordPress.org.
+   - Download the ZIP from [GitHub Releases](https://github.com/teckglobal/teckglobal-brute-force-protect/releases) or WordPress.org.
    - Go to `Plugins > Add New`, click `Upload Plugin`, select the ZIP, and click `Install Now`.
 
 2. **Activate the Plugin**:
@@ -27,189 +36,43 @@ TeckGlobal Brute Force Protect, developed by TeckGlobal LLC with xAI's Grok, is 
 3. **Configure Settings**:
    - Navigate to `TeckGlobal BFP > Settings`.
    - Adjust max login attempts, ban duration, block message, CAPTCHA, notifications, threat feeds, and more.
-   - (Optional) Add a [MaxMind License Key](https://www.maxmind.com/en/geolite2/signup) for geolocation, [reCAPTCHA keys](https://www.google.com/recaptcha) for CAPTCHA, or an [AbuseIPDB API key](https://www.abuseipdb.com/register) for threat intelligence.
+   - (Optional) Add a [MaxMind License Key](https://www.maxmind.com/en/geolite2/signup) for geolocation, [reCAPTCHA keys](https://www.google.com/recaptcha) for CAPTCHA, or API keys from [AbuseIPDB](https://www.abuseipdb.com/register) and [Project Honeypot](https://www.projecthoneypot.org/httpbl_configure.php) for threat intelligence.
 
 4. **Monitor**:
    - View stats in the dashboard widget.
    - Check logs and a banned IP map at `TeckGlobal BFP > IP Logs & Map`.
 
-== Settings and Usage ==
-
-Configure options under `TeckGlobal BFP > Settings`. Here’s what each setting does, how to adjust it, and how to verify it works:
-
-= General Settings =
-
-- **Max Login Attempts**
-  - Purpose: Number of failed logins before banning an IP.
-  - Default: 5
-  - Adjust: Enter a number (e.g., 8).
-  - Verify: Fail logins from a test IP beyond this limit; check `IP Logs & Map` for a ban (red icon).
-
-- **Ban Duration**
-  - Purpose: Duration of an IP ban.
-  - Default: 60 minutes
-  - Options: 15 min, 30 min, 1 hr, 3 hrs, 1 day, 3 days, 1 week
-  - Adjust: Select from the dropdown.
-  - Verify: Ban an IP, note "Ban Expiry" in `IP Logs & Map`, test access after expiry.
-
-- **Auto-Ban Invalid Usernames**
-  - Purpose: Bans IPs using non-existent usernames instantly.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Login with a fake username (e.g., `fakeuser`); check `IP Logs & Map` for a ban.
-
-- **Excluded IPs**
-  - Purpose: Excludes IPs/subnets from protection.
-  - Default: Empty
-  - Adjust: Add IPs (e.g., `192.168.1.1`) or subnets (e.g., `10.0.0.0/24`) with notes.
-  - Verify: Add a test IP, exceed attempts; it shouldn’t be banned in `IP Logs & Map`).
-
-- **Enable Exploit Protection**
-  - Purpose: Bans IPs scanning for vulnerabilities.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Request `your-site.com/phpMyAdmin` beyond "Max Exploit Attempts"; check `IP Logs & Map`.
-
-- **Max Exploit Attempts**
-  - Purpose: Number of exploit attempts before a ban.
-  - Default: 3
-  - Adjust: Enter a number (e.g., 5).
-  - Verify: Hit suspicious URLs; ban triggers after this limit.
-
-- **MaxMind License Key**
-  - Purpose: Enables geolocation data.
-  - Default: Empty
-  - Adjust: Get a key from [MaxMind](https://www.maxmind.com/en/geolite2/signup) and enter it.
-  - Verify: Add a key, trigger a login; check `IP Logs & Map` for country/coordinates.
-
-- **Remove Data on Deactivation**
-  - Purpose: Deletes plugin data on deactivation.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Enable, deactivate, reactivate; data should reset.
-
-- **Enable Debug Logging**
-  - Purpose: Logs to `wp-content/teckglobal-bfp-debug.log`.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Enable, trigger an action; check the log.
-
-- **Block Message**
-  - Purpose: Message for banned IPs.
-  - Default: "Your IP has been banned due to suspicious activity. Please contact the site administrator."
-  - Adjust: Enter a custom message.
-  - Verify: Ban a test IP; visit the site to see your message.
-
-- **Enable Detailed Debug Log**
-  - Purpose: Detailed logs to `wp-content/teckglobal-bfp-detailed.log`.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Enable, trigger an action; check the detailed log.
-
-- **IP Whitelist**
-  - Purpose: Bypasses checks for listed IPs.
-  - Default: Empty
-  - Adjust: Enter IPs (e.g., `192.168.1.1`), one per line.
-  - Verify: Add a test IP, exceed limits; it shouldn’t be banned.
-
-= Advanced Features =
-
-- **Enable Notifications**
-  - Purpose: Emails you on ban events.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Enable, ban an IP; check your email.
-
-- **Notification Email**
-  - Purpose: Email for notifications.
-  - Default: Admin email
-  - Adjust: Enter an email (e.g., `alerts@your-site.com`).
-  - Verify: Set an email, ban an IP; confirm receipt.
-
-- **Enable CAPTCHA**
-  - Purpose: Adds reCAPTCHA to `wp-login.php`.
-  - Default: Off
-  - Adjust: Check to enable (requires keys).
-  - Verify: Enable with keys; see CAPTCHA on `wp-login.php`.
-
-- **reCAPTCHA Site Key & Secret Key**
-  - Purpose: Integrates Google reCAPTCHA v2.
-  - Default: Empty
-  - Adjust: Get keys from [Google reCAPTCHA](https://www.google.com/recaptcha): Sign in, click "Admin Console," select "reCAPTCHA v2" > "Checkbox," add your domain, submit, copy keys.
-  - Verify: Add keys, enable CAPTCHA; check `wp-login.php`.
-
-- **Enable Rate Limiting**
-  - Purpose: Limits login attempts in a time window.
-  - Default: Off
-  - Adjust: Check to enable.
-  - Verify: Exceed "Rate Limit Attempts" within "Interval"; attempts should block.
-
-- **Rate Limit Attempts**
-  - Purpose: Number of attempts in the interval.
-  - Default: 3
-  - Adjust: Enter a number (e.g., 4).
-  - Verify: Exceed this within the interval; see a block.
-
-- **Rate Limit Interval (seconds)**
-  - Purpose: Time window for rate limiting.
-  - Default: 60
-  - Adjust: Enter seconds (e.g., 120).
-  - Verify: Exceed attempts, wait; attempts resume after.
-
-- **Enable Threat Feed**
-  - Purpose: Bans IPs flagged by AbuseIPDB.
-  - Default: Off
-  - Adjust: Check to enable (requires API key).
-  - Verify: Enable with a key, use a malicious IP from [AbuseIPDB](https://www.abuseipdb.com/check); login attempt should ban it.
-
-- **AbuseIPDB API Key**
-  - Purpose: Queries AbuseIPDB for threat data.
-  - Default: Empty
-  - Adjust: Register at [AbuseIPDB](https://www.abuseipdb.com/register), go to "API" > "Create Key," copy and paste it.
-  - Verify: Add a key, enable threat feed, test with a reported IP; check `IP Logs & Map`.
-
-- **Project Honeypot API Key**
-  - Purpose: Queries Project Honeypot via HTTP:BL for threat data (bans IPs with a threat score > 0).
-  - Default: Empty
-  - Adjust: 
-    1. Register at [Project Honeypot](https://www.projecthoneypot.org/httpbl_configure.php).
-    2. Sign up, activate HTTP:BL, generate an API key, copy it.
-    3. Paste it here.
-  - Verify: Add a key, enable Project Honeypot feed, test with a flagged IP—check `IP Logs & Map` for a "threat_feed" ban.
-
-= Export/Import Settings =
-- Purpose: Backup or restore settings.
-- Adjust: Click "Export" for a `.json` file, or upload one and click "Import."
-- Verify: Export, change a setting, import; original value returns.
-
 == Frequently Asked Questions ==
 
 = How does it detect brute force attempts? =
-It logs failed logins per IP and bans after exceeding the set limit (default: 5).
+It tracks failed logins per IP and bans them after exceeding your set limit (default: 5). Enable "Auto-Ban Invalid Usernames" for instant bans on fake logins.
 
 = Can I change the ban message? =
-Yes, customize it in the "Block Message" field under settings.
+Yes, customize it in `Settings > Block Message`—it appears to banned IPs.
 
 = What’s the visual feedback on the login form? =
-Banned IPs trigger a shake animation and red border on login attempts.
+Banned IPs trigger a shake animation with a red border on login attempts.
 
-= How do I enable debug logs? =
-Check "Enable Debug Logging" or "Enable Detailed Debug Log" for logs in `wp-content/`.
+= How do I enable geolocation? =
+Add a free [MaxMind License Key](https://www.maxmind.com/en/geolite2/signup) in settings to see IP locations on the `IP Logs & Map`.
 
-= How do I whitelist IPs? =
-Add IPs in the "IP Whitelist" field to skip checks.
+= What are threat feeds? =
+AbuseIPDB and Project Honeypot auto-ban high-risk IPs before they hit your limits. Enable them with API keys in settings.
 
-= Is a MaxMind key required? =
-No, it’s optional for geolocation; without it, country data is "Unknown."
+= How does CAPTCHA help? =
+It adds Google reCAPTCHA v2 to `wp-login.php`, blocking bots. Requires keys from [Google reCAPTCHA](https://www.google.com/recaptcha).
 
-= How do I enable CAPTCHA? =
-Enable it and add reCAPTCHA keys from Google.
+= What’s rate limiting? =
+It caps login attempts within a time frame (e.g., 3 in 60 seconds), stopping rapid attacks.
 
-= What is rate limiting? =
-It restricts login attempts within a time frame (configurable).
+= Can I exclude my IP? =
+Yes, use "Excluded IPs" (for subnets) or "IP Whitelist" to bypass protection.
 
-= How does threat intelligence work? =
-It uses AbuseIPDB to auto-ban high-risk IPs (requires API key).
+= How do I monitor activity? =
+The dashboard widget shows daily stats; `IP Logs & Map` provides detailed logs and a banned IP map.
+
+= Where are logs stored? =
+Enable "Debug Logging" for `wp-content/teckglobal-bfp-debug.log` or "Detailed Debug Log" for `teckglobal-bfp-detailed.log`.
 
 == Screenshots ==
 
@@ -222,49 +85,49 @@ It uses AbuseIPDB to auto-ban high-risk IPs (requires API key).
 == Changelog ==
 
 = 1.1.2 =
-* Improved settings page with links and descriptions for AbuseIPDB, reCAPTCHA, and MaxMind keys.
-* Enhanced "View Details" popup with local images and detailed sections.
+* Improved settings page with detailed descriptions and links for AbuseIPDB, reCAPTCHA, and MaxMind keys.
+* Enhanced "View Details" popup with FAQ and full changelog.
 
 = 1.1.1 =
-* Enhanced threat intelligence with multiple feed support (AbuseIPDB and Project Honeypot) and a selector in settings.
+* Added multiple threat feed support (AbuseIPDB and Project Honeypot) with a settings selector.
 
 = 1.1.0 =
-* Added real-time email notifications.
-* Integrated reCAPTCHA for login protection.
-* Implemented rate limiting.
+* Added real-time email notifications for ban events.
+* Integrated Google reCAPTCHA v2 for login protection.
+* Implemented rate limiting for login attempts.
 * Added AbuseIPDB threat intelligence.
-* Included user agent logging.
-* Enabled settings export/import.
+* Included user agent logging for better tracking.
+* Enabled settings export/import functionality.
 
 = 1.0.3 =
-* Added dashboard widget.
-* Customizable block message.
-* Visual login feedback (shake animation).
-* Toggleable debug logs.
-* IP whitelist feature.
-* Improved settings UI/documentation.
+* Added dashboard widget for quick stats.
+* Introduced customizable block messages.
+* Implemented visual login feedback (shake animation).
+* Added toggleable detailed debug logs.
+* Included IP whitelist feature.
+* Improved settings UI and documentation.
 
 = 1.0.2 =
 * Enhanced GeoIP download reliability.
-* Fixed auto-update toggle display.
+* Fixed auto-update toggle display on Plugins page.
 
 = 1.0.1 =
-* Added exploit scan protection.
-* Optimized database performance.
+* Added exploit scan protection for sensitive endpoints.
+* Optimized database performance for logs.
 
 = 1.0.0 =
-* Initial release with brute force and geolocation.
+* Initial release with core brute force protection and geolocation support.
 
 == Upgrade Notice ==
 
 = 1.1.2 =
-Upgrade for improved settings page usability and a more detailed "View Details" popup.
+Upgrade for a better settings experience and enriched plugin details in the "View Details" popup.
 
 = 1.1.0 =
-Upgrade for notifications, CAPTCHA, rate limiting, threat intelligence, user agent logging, and settings management.
+Upgrade for advanced features like notifications, CAPTCHA, rate limiting, threat intelligence, and settings management.
 
 = 1.0.3 =
-Upgrade for monitoring tools, user experience enhancements, and advanced options.
+Upgrade for enhanced monitoring and user experience improvements.
 
 == Additional Information ==
 
