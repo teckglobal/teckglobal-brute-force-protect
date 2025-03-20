@@ -831,8 +831,8 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
             'high' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-1544x500.jpg'
         ],
         'icons' => [
-            '1x' => 'https://teck-global.com/wp-content/uploads/2025/03/teckglobal-bfp-icon-112x128.webp',
-            '2x' => 'https://teck-global.com/wp-content/uploads/2025/03/teckglobal-bfp-icon-215x250.webp'
+            '1x' => 'assets/css/images/teckglobal-bfp-icon-112x128.webp',
+            '2x' => 'assets/css/images/teckglobal-bfp-icon-215x250.webp'
         ],
         'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];
