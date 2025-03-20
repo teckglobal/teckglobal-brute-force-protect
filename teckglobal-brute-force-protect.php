@@ -818,9 +818,41 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
     $api_url = "https://api.github.com/repos/{$repo}/releases/latest";
     $response = wp_remote_get($api_url, [
         'headers' => ['User-Agent' => 'WordPress/TeckGlobal-BFP-' . TECKGLOBAL_BFP_VERSION],
+        'timeout' => 15,
     ]);
 
-    if (is_wp_error($response) || !$release = json_decode(wp_remote_retrieve_body($response), true) || empty($release['tag_name'])) {
+    // Check for WP_Error or non-200 response
+    if (is_wp_error($response)) {
+        teckglobal_bfp_debug("GitHub API request failed: " . $response->get_error_message());
+        return $result;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    if ($response_code !== 200) {
+        $response_body = wp_remote_retrieve_body($response);
+        teckglobal_bfp_debug("GitHub API returned non-200 status: $response_code. Response: $response_body");
+        return $result;
+    }
+
+    // Decode the response body
+    $response_body = wp_remote_retrieve_body($response);
+    $release = json_decode($response_body, true);
+
+    // Validate the decoded response
+    if (!is_array($release)) {
+        teckglobal_bfp_debug("GitHub API response is not a valid JSON array: $response_body");
+        return $result;
+    }
+
+    // Check for rate limit or other error messages
+    if (isset($release['message'])) {
+        teckglobal_bfp_debug("GitHub API error: " . $release['message']);
+        return $result;
+    }
+
+    // Validate required fields
+    if (empty($release['tag_name']) || empty($release['zipball_url']) || empty($release['published_at'])) {
+        teckglobal_bfp_debug("GitHub API response missing required fields: " . print_r($release, true));
         return $result;
     }
 
@@ -849,8 +881,8 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
             'high' => TECKGLOBAL_BFP_URL . 'assets/css/images/banner-1544x500.jpg'
         ],
         'icons' => [
-            '1x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-128x128.webp',
-            '2x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-256x256.webp'
+            '1x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-128x128.jpg',
+            '2x' => TECKGLOBAL_BFP_URL . 'assets/css/images/icon-256x256.jpg'
         ],
         'donate_link' => 'https://teck-global.com/buy-me-a-coffee/'
     ];
