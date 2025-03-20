@@ -5,7 +5,7 @@
  * Author URI: https://teck-global.com/
  * Plugin URI: https://teck-global.com/wordpress-plugins/
  * Description: A WordPress plugin by TeckGlobal LLC to prevent brute force login attacks and exploit scans with IP management and geolocation features. If you enjoy this free product please donate at https://teck-global.com/buy-me-a-coffee/
- * Version: 1.1.0
+ * Version: 1.1.1
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: teckglobal-brute-force-protect
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.1.0');
+define('TECKGLOBAL_BFP_VERSION', '1.1.1'); // Updated to 1.1.1
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -282,7 +282,7 @@ function teckglobal_bfp_activate() {
         longitude DECIMAL(10,7) DEFAULT NULL,
         scan_exploit TINYINT(1) NOT NULL DEFAULT 0,
         brute_force TINYINT(1) NOT NULL DEFAULT 0,
-        manual_ban TINYINT(1) NOT NULL DEFAULT 0,
+        manualව_menu_ban TINYINT(1) NOT NULL DEFAULT 0,
         user_agent VARCHAR(255) DEFAULT NULL,
         PRIMARY KEY (id),
         UNIQUE KEY ip (ip)
@@ -312,8 +312,9 @@ function teckglobal_bfp_activate() {
     add_option('teckglobal_bfp_enable_rate_limit', 0);
     add_option('teckglobal_bfp_rate_limit_attempts', 3);
     add_option('teckglobal_bfp_rate_limit_interval', 60);
-    add_option('teckglobal_bfp_enable_threat_feed', 0);
+    add_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]); // New: Multi-feed support
     add_option('teckglobal_bfp_abuseipdb_key', '');
+    add_option('teckglobal_bfp_project_honeypot_key', ''); // New: Project Honeypot key
 
     if (!wp_next_scheduled('teckglobal_bfp_initial_geoip_download')) {
         wp_schedule_single_event(time() + 10, 'teckglobal_bfp_initial_geoip_download');
@@ -347,8 +348,8 @@ function teckglobal_bfp_deactivate() {
             'teckglobal_bfp_block_message', 'teckglobal_bfp_enable_debug_log', 'teckglobal_bfp_whitelist_ips',
             'teckglobal_bfp_enable_notifications', 'teckglobal_bfp_notification_email', 'teckglobal_bfp_enable_captcha',
             'teckglobal_bfp_recaptcha_site_key', 'teckglobal_bfp_recaptcha_secret_key', 'teckglobal_bfp_enable_rate_limit',
-            'teckglobal_bfp_rate_limit_attempts', 'teckglobal_bfp_rate_limit_interval', 'teckglobal_bfp_enable_threat_feed',
-            'teckglobal_bfp_abuseipdb_key'
+            'teckglobal_bfp_rate_limit_attempts', 'teckglobal_bfp_rate_limit_interval', 'teckglobal_bfp_threat_feeds',
+            'teckglobal_bfp_abuseipdb_key', 'teckglobal_bfp_project_honeypot_key'
         ];
         foreach ($options as $option) {
             delete_option($option);
@@ -362,7 +363,6 @@ function teckglobal_bfp_handle_settings_save() {
         return;
     }
 
-    // Check if we're on the correct page
     if (!isset($_GET['page']) || $_GET['page'] !== 'teckglobal-bfp') {
         return;
     }
@@ -405,8 +405,13 @@ function teckglobal_bfp_handle_settings_save() {
     update_option('teckglobal_bfp_enable_rate_limit', isset($_POST['enable_rate_limit']) ? 1 : 0);
     update_option('teckglobal_bfp_rate_limit_attempts', absint($_POST['rate_limit_attempts']));
     update_option('teckglobal_bfp_rate_limit_interval', absint($_POST['rate_limit_interval']));
-    update_option('teckglobal_bfp_enable_threat_feed', isset($_POST['enable_threat_feed']) ? 1 : 0);
+    $threat_feeds = [
+        'abuseipdb' => isset($_POST['threat_feeds']['abuseipdb']) ? 1 : 0,
+        'project_honeypot' => isset($_POST['threat_feeds']['project_honeypot']) ? 1 : 0
+    ];
+    update_option('teckglobal_bfp_threat_feeds', $threat_feeds); // New: Save selected feeds
     update_option('teckglobal_bfp_abuseipdb_key', sanitize_text_field($_POST['abuseipdb_key']));
+    update_option('teckglobal_bfp_project_honeypot_key', sanitize_text_field($_POST['project_honeypot_key'])); // New: Save Project Honeypot key
 
     teckglobal_bfp_debug("Settings saved, preparing redirect");
 
@@ -427,7 +432,6 @@ function teckglobal_bfp_settings_page() {
         wp_die('Unauthorized access');
     }
 
-    // Handle export and import (these don't redirect, so no buffering needed here)
     if (isset($_POST['teckglobal_bfp_export_settings']) && check_admin_referer('teckglobal_bfp_export')) {
         teckglobal_bfp_export_settings();
     }
@@ -436,6 +440,7 @@ function teckglobal_bfp_settings_page() {
     }
 
     $excluded_ips = get_option('teckglobal_bfp_excluded_ips', []);
+    $threat_feeds = get_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]); // New: Load selected feeds
     ?>
     <div class="wrap">
         <h1>TeckGlobal Brute Force Protect Settings</h1>
@@ -573,12 +578,22 @@ function teckglobal_bfp_settings_page() {
                     <td><input type="number" name="rate_limit_interval" value="<?php echo esc_attr(get_option('teckglobal_bfp_rate_limit_interval', 60)); ?>" min="1" /></td>
                 </tr>
                 <tr>
-                    <th>Enable Threat Feed</th>
-                    <td><input type="checkbox" name="enable_threat_feed" <?php checked(get_option('teckglobal_bfp_enable_threat_feed', 0), 1); ?> /></td>
+                    <th>Enable Threat Feeds</th>
+                    <td>
+                        <label><input type="checkbox" name="threat_feeds[abuseipdb]" <?php checked($threat_feeds['abuseipdb'], 1); ?> /> AbuseIPDB</label><br>
+                        <label><input type="checkbox" name="threat_feeds[project_honeypot]" <?php checked($threat_feeds['project_honeypot'], 1); ?> /> Project Honeypot</label>
+                        <p><small>Select one or more threat feeds to check IPs against.</small></p>
+                    </td>
                 </tr>
                 <tr>
                     <th>AbuseIPDB API Key</th>
                     <td><input type="text" name="abuseipdb_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_abuseipdb_key', '')); ?>" size="50" /></td>
+                </tr>
+                <tr>
+                    <th>Project Honeypot API Key</th>
+                    <td><input type="text" name="project_honeypot_key" value="<?php echo esc_attr(get_option('teckglobal_bfp_project_honeypot_key', '')); ?>" size="50" />
+                        <p><small>Get your key from <a href="https://www.projecthoneypot.org/httpbl_configure.php" target="_blank">Project Honeypot</a>.</small></p>
+                    </td>
                 </tr>
             </table>
 
@@ -809,7 +824,7 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'sections' => [
             'description' => '<p>A WordPress plugin to prevent brute force login attacks and exploit scans, with features like IP management, geolocation, notifications, CAPTCHA, rate limiting, and threat feeds.</p><p>Support us at <a href="https://teck-global.com/buy-me-a-coffee/">Buy Me a Coffee</a>.</p>',
             'installation' => '<ol><li>Upload via Plugins > Add New > Upload Plugin.</li><li>Activate.</li><li>Configure in TeckGlobal BFP > Settings.</li><li>Monitor via dashboard or IP Logs & Map.</li></ol>',
-            'changelog' => '<h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings.</li></ul><h4>1.0.3</h4><ul><li>Dashboard widget, block message, login feedback, debug logs, whitelist.</li></ul>',
+            'changelog' => '<h4>1.1.1</h4><ul><li>Enhanced threat feed support with multiple sources (AbuseIPDB, Project Honeypot) and a selector.</li></ul><h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings.</li></ul><h4>1.0.3</h4><ul><li>Dashboard widget, block message, login feedback, debug logs, whitelist.</li></ul>',
         ],
         'banners' => [
             'low' => 'https://teck-global.com/wp-content/uploads/teckglobal-bfp-banner-772x250.jpg',

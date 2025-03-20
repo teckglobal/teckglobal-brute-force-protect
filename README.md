@@ -4,14 +4,14 @@ A WordPress plugin by TeckGlobal LLC and xAI's Grok to protect your site from br
 
 - **Plugin URI**: [https://teck-global.com/wordpress-plugins/](https://teck-global.com/wordpress-plugins/)
 - **Author**: TeckGlobal LLC, xAI-Grok
-- **Version**: 1.1.0
+- **Version**: 1.1.1
 - **License**: GPL-2.0+
 - **Requires**: WordPress 5.0+, PHP 7.4+
 - **Tested Up To**: WordPress 6.7.2
 
 ## Description
 
-TeckGlobal Brute Force Protect secures your WordPress site by blocking IPs after excessive login attempts or exploit scans. It offers geolocation tracking, IP management, a dashboard widget, customizable block messages, visual login feedback, debug logging, an IP whitelist, real-time notifications, CAPTCHA integration, rate limiting, threat intelligence via AbuseIPDB, user agent logging, and settings export/import. Support this free plugin with a donation at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
+TeckGlobal Brute Force Protect secures your WordPress site by blocking IPs after excessive login attempts or exploit scans. It offers geolocation tracking, IP management, a dashboard widget, customizable block messages, visual login feedback, debug logging, an IP whitelist, real-time notifications, CAPTCHA integration, rate limiting, multiple threat intelligence feeds (AbuseIPDB and Project Honeypot), user agent logging, and settings export/import. Support this free plugin with a donation at [TeckGlobal's Buy Me a Coffee](https://teck-global.com/buy-me-a-coffee/).
 
 ## Features
 
@@ -27,7 +27,7 @@ TeckGlobal Brute Force Protect secures your WordPress site by blocking IPs after
 - **Real-Time Notifications**: Email alerts for ban events (v1.1.0).
 - **CAPTCHA Integration**: Adds Google reCAPTCHA v2 to the login form (v1.1.0).
 - **Rate Limiting**: Limits login attempts within a time frame (v1.1.0).
-- **Threat Intelligence**: Integrates with AbuseIPDB to ban known malicious IPs (v1.1.0).
+- **Multiple Threat Intelligence**: Integrates with AbuseIPDB and Project Honeypot, selectable via settings (v1.1.1).
 - **User Agent Logging**: Records user agents with each attempt for analysis (v1.1.0).
 - **Settings Export/Import**: Backup and restore plugin settings (v1.1.0).
 
@@ -39,7 +39,7 @@ TeckGlobal Brute Force Protect secures your WordPress site by blocking IPs after
 4. **Optional Integrations**:
    - **Geolocation**: Add a [MaxMind License Key](https://www.maxmind.com/en/geolite2/signup).
    - **CAPTCHA**: Get [Google reCAPTCHA keys](https://www.google.com/recaptcha).
-   - **Threat Feed**: Obtain an [AbuseIPDB API Key](https://www.abuseipdb.com/register).
+   - **Threat Feeds**: Obtain an [AbuseIPDB API Key](https://www.abuseipdb.com/register) and/or a [Project Honeypot API Key](https://www.projecthoneypot.org/httpbl_configure.php).
 
 ## Settings and Usage
 
@@ -168,20 +168,29 @@ Configure all options under **TeckGlobal BFP > Settings**. Here’s what each se
    - **Adjust**: Enter seconds (e.g., 120).
    - **Verify**: Exceed attempts, wait out the interval—attempts should resume.
 
-8. **Enable Threat Feed**
-   - **Purpose**: Bans IPs flagged by AbuseIPDB.
-   - **Default**: Off
-   - **Adjust**: Check to enable (requires API key).
-   - **Verify**: Enable with a key, use a malicious IP (check [AbuseIPDB](https://www.abuseipdb.com/check)), attempt login—IP should be banned instantly.
+8. **Enable Threat Feeds**
+   - **Purpose**: Bans IPs flagged by selected threat feeds (AbuseIPDB, Project Honeypot).
+   - **Default**: Off (both feeds unchecked)
+   - **Adjust**: Check one or both boxes to enable (requires respective API keys).
+   - **Verify**: Enable with keys, use a malicious IP (check [AbuseIPDB](https://www.abuseipdb.com/check) or [Project Honeypot](https://www.projecthoneypot.org/search_ip.php)), attempt login—IP should be banned instantly with "threat_feed" reason in logs.
 
 9. **AbuseIPDB API Key**
-   - **Purpose**: Queries AbuseIPDB for threat data.
+   - **Purpose**: Queries AbuseIPDB for threat data (bans IPs with a confidence score ≥ 75).
    - **Default**: Empty
    - **Adjust**: 
      1. Register at [AbuseIPDB](https://www.abuseipdb.com/register).
      2. Go to "API" > "Create Key," name it, copy the key.
      3. Paste it here.
-   - **Verify**: Add a key, enable threat feed, test with a reported IP—check `IP Logs & Map` for a "threat_feed" ban.
+   - **Verify**: Add a key, enable AbuseIPDB feed, test with a reported IP—check `IP Logs & Map` for a "threat_feed" ban.
+
+10. **Project Honeypot API Key**
+    - **Purpose**: Queries Project Honeypot via HTTP:BL for threat data (bans IPs with a threat score > 0).
+    - **Default**: Empty
+    - **Adjust**: 
+      1. Register at [Project Honeypot](https://www.projecthoneypot.org/httpbl_configure.php).
+      2. Sign up, activate HTTP:BL, generate an API key, copy it.
+      3. Paste it here.
+    - **Verify**: Add a key, enable Project Honeypot feed, test with a flagged IP—check `IP Logs & Map` for a "threat_feed" ban.
 
 ### Export/Import Settings
 - **Purpose**: Backup or restore settings.
@@ -201,6 +210,9 @@ Configure all options under **TeckGlobal BFP > Settings**. Here’s what each se
 - Visit [TeckGlobal Support](https://teck-global.com/support/) or [GitHub Issues](https://github.com/teckglobal/teckglobal-brute-force-protect/issues).
 
 ## Changelog
+
+### 1.1.1
+- Enhanced threat intelligence with multiple feed support (AbuseIPDB and Project Honeypot) and a selector in settings.
 
 ### 1.1.0
 - Real-time email notifications.
@@ -238,6 +250,8 @@ Configure all options under **TeckGlobal BFP > Settings**. Here’s what each se
 - **TeckGlobal LLC**: [https://teck-global.com/](https://teck-global.com/)
 - **xAI's Grok**: AI-assisted development
 - **MaxMind GeoLite2**: Geolocation data
+- **AbuseIPDB**: Threat intelligence
+- **Project Honeypot**: Threat intelligence via HTTP:BL
 
 ## Donate
 

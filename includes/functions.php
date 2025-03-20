@@ -329,26 +329,49 @@ function teckglobal_bfp_check_rate_limit(string $ip): bool {
 }
 
 function teckglobal_bfp_check_threat_feed(string $ip): bool {
-    if (!get_option('teckglobal_bfp_enable_threat_feed', 0)) {
-        return false;
-    }
-    $api_key = get_option('teckglobal_bfp_abuseipdb_key', '');
-    if (empty($api_key)) {
-        return false;
+    $threat_feeds = get_option('teckglobal_bfp_threat_feeds', ['abuseipdb' => 0, 'project_honeypot' => 0]);
+    $banned = false;
+
+    // Check AbuseIPDB
+    if ($threat_feeds['abuseipdb']) {
+        $api_key = get_option('teckglobal_bfp_abuseipdb_key', '');
+        if (!empty($api_key)) {
+            $response = wp_remote_get("https://api.abuseipdb.com/api/v2/check?ipAddress=$ip&maxAgeInDays=90", [
+                'headers' => ['Key' => $api_key, 'Accept' => 'application/json'],
+                'timeout' => 10
+            ]);
+
+            if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                $data = json_decode(wp_remote_retrieve_body($response), true);
+                if (($data['data']['abuseConfidenceScore'] ?? 0) >= 75) {
+                    $banned = true;
+                    teckglobal_bfp_debug("IP $ip flagged by AbuseIPDB (score: {$data['data']['abuseConfidenceScore']})");
+                }
+            } else {
+                teckglobal_bfp_debug("AbuseIPDB check failed for $ip: " . (is_wp_error($response) ? $response->get_error_message() : wp_remote_retrieve_response_code($response)));
+            }
+        }
     }
 
-    $response = wp_remote_get("https://api.abuseipdb.com/api/v2/check?ipAddress=$ip", [
-        'headers' => ['Key' => $api_key, 'Accept' => 'application/json'],
-        'timeout' => 10
-    ]);
-
-    if (is_wp_error($response)) {
-        teckglobal_bfp_debug("Threat feed check failed: " . $response->get_error_message());
-        return false;
+    // Check Project Honeypot (only if not already banned by AbuseIPDB)
+    if (!$banned && $threat_feeds['project_honeypot']) {
+        $api_key = get_option('teckglobal_bfp_project_honeypot_key', '');
+        if (!empty($api_key)) {
+            $dns_query = "$api_key.$ip.dnsbl.httpbl.org";
+            $lookup = gethostbyname($dns_query);
+            if ($lookup !== $dns_query) { // Valid response
+                $octets = explode('.', $lookup);
+                if ($octets[0] == 127 && $octets[1] > 0) { // Threat score > 0
+                    $banned = true;
+                    teckglobal_bfp_debug("IP $ip flagged by Project Honeypot (threat: {$octets[1]})");
+                }
+            } else {
+                teckglobal_bfp_debug("Project Honeypot check failed for $ip: No DNS response");
+            }
+        }
     }
 
-    $data = json_decode(wp_remote_retrieve_body($response), true);
-    return ($data['data']['abuseConfidenceScore'] ?? 0) >= 75;
+    return $banned;
 }
 
 function teckglobal_bfp_manage_ips_page(): void {
@@ -520,8 +543,8 @@ function teckglobal_bfp_export_settings(): void {
         'teckglobal_bfp_block_message', 'teckglobal_bfp_enable_debug_log', 'teckglobal_bfp_whitelist_ips',
         'teckglobal_bfp_enable_notifications', 'teckglobal_bfp_notification_email', 'teckglobal_bfp_enable_captcha',
         'teckglobal_bfp_recaptcha_site_key', 'teckglobal_bfp_recaptcha_secret_key', 'teckglobal_bfp_enable_rate_limit',
-        'teckglobal_bfp_rate_limit_attempts', 'teckglobal_bfp_rate_limit_interval', 'teckglobal_bfp_enable_threat_feed',
-        'teckglobal_bfp_abuseipdb_key'
+        'teckglobal_bfp_rate_limit_attempts', 'teckglobal_bfp_rate_limit_interval', 'teckglobal_bfp_threat_feeds',
+        'teckglobal_bfp_abuseipdb_key', 'teckglobal_bfp_project_honeypot_key'
     ];
     $settings = array_combine($options, array_map('get_option', $options));
     $json = json_encode($settings, JSON_PRETTY_PRINT);
@@ -553,7 +576,8 @@ function teckglobal_bfp_import_settings(): void {
         'teckglobal_bfp_enable_captcha' => 'bool', 'teckglobal_bfp_recaptcha_site_key' => 'sanitize_text_field',
         'teckglobal_bfp_recaptcha_secret_key' => 'sanitize_text_field', 'teckglobal_bfp_enable_rate_limit' => 'bool',
         'teckglobal_bfp_rate_limit_attempts' => 'absint', 'teckglobal_bfp_rate_limit_interval' => 'absint',
-        'teckglobal_bfp_enable_threat_feed' => 'bool', 'teckglobal_bfp_abuseipdb_key' => 'sanitize_text_field'
+        'teckglobal_bfp_threat_feeds' => 'array', 'teckglobal_bfp_abuseipdb_key' => 'sanitize_text_field',
+        'teckglobal_bfp_project_honeypot_key' => 'sanitize_text_field'
     ];
 
     foreach ($settings as $key => $value) {

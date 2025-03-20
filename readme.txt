@@ -168,6 +168,15 @@ Configure options under `TeckGlobal BFP > Settings`. Here’s what each setting 
   - Adjust: Register at [AbuseIPDB](https://www.abuseipdb.com/register), go to "API" > "Create Key," copy and paste it.
   - Verify: Add a key, enable threat feed, test with a reported IP; check `IP Logs & Map`.
 
+- **Project Honeypot API Key**
+  - Purpose**: Queries Project Honeypot via HTTP:BL for threat data (bans IPs with a threat score > 0).
+  - Default**: Empty
+  - Adjust**: 
+    1. Register at [Project Honeypot](https://www.projecthoneypot.org/httpbl_configure.php).
+    2. Sign up, activate HTTP:BL, generate an API key, copy it.
+    3. Paste it here.
+  - Verify**: Add a key, enable Project Honeypot feed, test with a flagged IP—check `IP Logs & Map` for a "threat_feed" ban.
+
 = Export/Import Settings =
 - Purpose: Backup or restore settings.
 - Adjust: Click "Export" for a `.json` file, or upload one and click "Import."
@@ -211,6 +220,9 @@ It uses AbuseIPDB to auto-ban high-risk IPs (requires API key).
 5. **Login Form Feedback**: Visual cue for banned IP attempts.
 
 == Changelog ==
+
+= 1.1.1 =
+* Enhanced threat intelligence with multiple feed support (AbuseIPDB and Project Honeypot) and a selector in settings.
 
 = 1.1.0 =
 * Added real-time email notifications.
