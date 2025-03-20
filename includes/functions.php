@@ -445,17 +445,6 @@ function teckglobal_bfp_ip_logs_page(): void {
     $total_pages = ceil($data['total'] / $limit);
     $base_url = admin_url("admin.php?page=teckglobal-bfp-ip-logs&log_limit=$limit");
 
-    $locations = array_map(function($log) {
-        return [
-            'lat' => floatval($log->latitude),
-            'lng' => floatval($log->longitude),
-            'ip' => esc_js($log->ip),
-            'country' => esc_js($log->country),
-            'user_agent' => esc_js($log->user_agent ?? 'Unknown')
-        ];
-    }, array_filter($logs, fn($log) => $log->banned && $log->latitude && $log->longitude));
-    $locations_json = json_encode($locations);
-
     $notice = '';
     if (isset($_GET['action']) && $_GET['action'] === 'unban' && check_admin_referer('teckglobal_bfp_unban_ip_log', '_wpnonce')) {
         $ip = sanitize_text_field($_GET['ip']);
@@ -516,21 +505,6 @@ function teckglobal_bfp_ip_logs_page(): void {
         </div>
         <h2>Blocked IP Locations</h2>
         <div id="bfp-map" style="height: 400px;"></div>
-        <script>
-            jQuery(function($) {
-                var map = L.map('bfp-map').setView([0, 0], 2);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                    maxZoom: 18
-                }).addTo(map);
-                var locations = <?php echo $locations_json; ?>;
-                locations.forEach(loc => {
-                    L.marker([loc.lat, loc.lng]).addTo(map)
-                        .bindPopup(`<b>IP:</b> ${loc.ip}<br><b>Country:</b> ${loc.country}<br><b>User Agent:</b> ${loc.user_agent}`);
-                });
-                if (locations.length) map.fitBounds(L.featureGroup(locations.map(loc => L.marker([loc.lat, loc.lng]))).getBounds());
-            });
-        </script>
     </div>
     <?php
 }

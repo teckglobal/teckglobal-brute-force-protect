@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('TECKGLOBAL_BFP_PATH', plugin_dir_path(__FILE__));
 define('TECKGLOBAL_BFP_URL', plugin_dir_url(__FILE__));
-define('TECKGLOBAL_BFP_VERSION', '1.1.2'); // Updated to 1.1.2
+define('TECKGLOBAL_BFP_VERSION', '1.1.2');
 define('TECKGLOBAL_BFP_GEO_DIR', WP_CONTENT_DIR . '/teckglobal-geoip/');
 define('TECKGLOBAL_BFP_GEO_FILE', TECKGLOBAL_BFP_GEO_DIR . 'GeoLite2-City.mmdb');
 
@@ -225,6 +225,21 @@ function teckglobal_bfp_enqueue_admin_assets($hook) {
             }
         ";
         wp_add_inline_script('leaflet-js', $fallback_script);
+
+        // Localize locations data for the IP Logs & Map page
+        $limit = isset($_GET['log_limit']) ? absint($_GET['log_limit']) : 10;
+        $page = max(1, isset($_GET['log_page']) ? absint($_GET['log_page']) : 1);
+        $data = teckglobal_bfp_get_ip_logs($limit, $page);
+        $locations = array_map(function($log) {
+            return [
+                'lat' => floatval($log->latitude ?? 0),
+                'lng' => floatval($log->longitude ?? 0),
+                'ip' => esc_js($log->ip),
+                'country' => esc_js($log->country),
+                'user_agent' => esc_js($log->user_agent ?? 'Unknown')
+            ];
+        }, array_filter($data['logs'], fn($log) => $log->banned && $log->latitude && $log->longitude));
+        wp_localize_script($script_handle, 'teckglobal_bfp_locations', array_values($locations)); // Convert to plain array
     }
 }
 add_action('admin_enqueue_scripts', 'teckglobal_bfp_enqueue_admin_assets');
@@ -821,7 +836,6 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         'timeout' => 15,
     ]);
 
-    // Check for WP_Error or non-200 response
     if (is_wp_error($response)) {
         teckglobal_bfp_debug("GitHub API request failed: " . $response->get_error_message());
         return $result;
@@ -834,23 +848,19 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
         return $result;
     }
 
-    // Decode the response body
     $response_body = wp_remote_retrieve_body($response);
     $release = json_decode($response_body, true);
 
-    // Validate the decoded response
     if (!is_array($release)) {
         teckglobal_bfp_debug("GitHub API response is not a valid JSON array: $response_body");
         return $result;
     }
 
-    // Check for rate limit or other error messages
     if (isset($release['message'])) {
         teckglobal_bfp_debug("GitHub API error: " . $release['message']);
         return $result;
     }
 
-    // Validate required fields
     if (empty($release['tag_name']) || empty($release['zipball_url']) || empty($release['published_at'])) {
         teckglobal_bfp_debug("GitHub API response missing required fields: " . print_r($release, true));
         return $result;
@@ -874,7 +884,7 @@ function teckglobal_bfp_plugins_api_filter($result, $action, $args) {
             'installation' => '<ol><li>Upload via Plugins > Add New > Upload Plugin.</li><li>Activate the plugin.</li><li>Configure settings at TeckGlobal BFP > Settings.</li><li>(Optional) Add MaxMind, reCAPTCHA, or AbuseIPDB keys.</li></ol>',
             'features' => '<ul><li>Blocks IPs after excessive login attempts</li><li>Detects exploit scans</li><li>Geolocation with MaxMind GeoLite2</li><li>Manual IP ban/unban</li><li>Dashboard stats</li><li>Custom block messages</li><li>Visual login feedback</li><li>Debug logs</li><li>Notifications</li><li>CAPTCHA</li><li>Rate limiting</li><li>Threat feeds</li><li>User agent logging</li><li>Settings export/import</li></ul>',
             'changelog' => '<h4>1.1.2</h4><ul><li>Improved settings page with links and descriptions</li><li>Enhanced "View Details" popup</li></ul><h4>1.1.1</h4><ul><li>Added multiple threat feed support</li></ul><h4>1.1.0</h4><ul><li>Added notifications, CAPTCHA, rate limiting, threat feed, user agent logging, export/import settings</li></ul>',
-            'screenshots' => '<ol><li><strong>Settings Page</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot1.webp" alt="Settings Page" style="max-width:100%;"></li><li><strong>IP Logs & Map</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot2.webp" alt="IP Logs & Map" style="max-width:100%;"></li><li><strong>Dashboard Widget</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot3.webp" alt="Dashboard Widget" style="max-width:100%;"></li></ol>',
+            'screenshots' => '<ol><li><strong>Settings Page</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot1.jpg" alt="Settings Page" style="max-width:100%;"></li><li><strong>IP Logs & Map</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot2.jpg" alt="IP Logs & Map" style="max-width:100%;"></li><li><strong>Dashboard Widget</strong><br><img src="' . TECKGLOBAL_BFP_URL . 'assets/css/images/screenshot3.jpg" alt="Dashboard Widget" style="max-width:100%;"></li></ol>',
         ],
         'banners' => [
             'low' => TECKGLOBAL_BFP_URL . 'assets/css/images/banner-772x250.jpg',

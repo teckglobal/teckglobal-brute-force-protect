@@ -86,7 +86,7 @@ jQuery(document).ready(function($) {
     }, 2000);
 
     // Map initialization for IP Logs & Map page
-    if ($('#bfp-map').length) { // Adjusted to match functions.php ID
+    if ($('#bfp-map').length) {
         console.log('Map container found, initializing at: ' + new Date().toISOString());
 
         if (typeof L === 'undefined') {
@@ -94,19 +94,29 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        var map = L.map('bfp-map').setView([0, 0], 2);
-        console.log('Map initialized with default view [0, 0] at zoom 2');
+        // Ensure map is only initialized once
+        if (!window.bfpMap) {
+            window.bfpMap = L.map('bfp-map').setView([0, 0], 2);
+            console.log('Map initialized with default view [0, 0] at zoom 2');
 
-        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 18
-        }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(window.bfpMap);
+        } else {
+            console.log('Map already initialized, clearing existing layers');
+            window.bfpMap.eachLayer(function(layer) {
+                if (layer instanceof L.Marker || layer instanceof L.LayerGroup) {
+                    window.bfpMap.removeLayer(layer);
+                }
+            });
+        }
 
-        var locationsData = window.teckglobal_bfp_locations || []; // Expecting localized data
+        var locationsData = teckglobal_bfp_locations || [];
         console.log('Locations data received: ' + JSON.stringify(locationsData));
 
-        if (locationsData.length > 0) {
-            var markers = L.layerGroup().addTo(map);
+        if (Array.isArray(locationsData) && locationsData.length > 0) {
+            var markers = L.layerGroup().addTo(window.bfpMap);
             var bounds = [];
 
             locationsData.forEach(function(location) {
@@ -125,11 +135,13 @@ jQuery(document).ready(function($) {
             });
 
             if (bounds.length > 0) {
-                map.fitBounds(bounds);
+                window.bfpMap.fitBounds(bounds);
                 console.log('Map adjusted to fit bounds: ' + JSON.stringify(bounds));
+            } else {
+                console.log('No valid bounds to adjust map.');
             }
         } else {
-            console.log('No valid locations to display on map.');
+            console.log('No valid locations to display on map or locationsData is not an array.');
         }
     }
 
